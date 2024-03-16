@@ -45,7 +45,6 @@ names(dblp_inproceedings)
 dblp_inproceedings$author.string.. #author
 dblp_inproceedings$title.string # titul dels papers
 dblp_inproceedings$crossref.string.. # key pel join
-dblp_inproceedings_db<-dblp_inproceedings[,c(2,9,25)]
 
 # dades de les conferences: 
 # preprocess
@@ -58,18 +57,12 @@ colnames(dblp_proceedings)<-header_4
 colnames(dblp_proceedings)
 dblp_proceedings$title.string # conference / workshop name 
 dblp_proceedings$key.string
-dblp_proceedings_db<-dblp_proceedings[,c(15,29,32)]
 
-
-# join
-names(dblp_proceedings_db)
-left_join_df <- left_join(dblp_inproceedings_db, dblp_proceedings_db, by = c("crossref.string.."="key.string"))
-left_join_df$title.string.y
 
 #################################################
 
-conference_split <- strsplit(left_join_df$title.string.y, ", ")
-conference_split[[2]] # exaple of entry
+conference_split <- strsplit(dblp_proceedings$title.string, ", ")
+conference_split[[945]] # exaple of entry
 conference_name <- sapply(conference_split, function(x) paste(x[1], collapse = ", "))
 detect_location <- function(entry) {
   location <- entry[nchar(entry) < 20 & !grepl("\\d", entry)] # Select entries shorter than 20 characters and without any number
@@ -77,10 +70,10 @@ detect_location <- function(entry) {
   return(location)
 }
 locations <- sapply(conference_split, detect_location)
-conference_year <- as.numeric(sub(".*\\b(\\d{4})\\b.*", "\\1", left_join_df$title.string.y))
+conference_year <- as.numeric(sub(".*\\b(\\d{4})\\b.*", "\\1", dblp_proceedings$title.string))
 
 
-conference_title <- sub(".*?((?:Conference|Workshop).*?$)", "\\1", conference_df$conference_name)
+conference_title <- sub(".*?((?:Conference|Workshop).*?$)", "\\1", conference_name)
 conference_edition <- extract_ordinals(conference_name)
 
 
@@ -107,15 +100,10 @@ extract_ordinals <- function(names_list) {
 }
 
 
-conference_title <- sub(".*?((?:Conference|Workshop).*?$)", "\\1", conference_df$conference_name)
-conference_edition <- extract_ordinals(conference_name)
-
-
   
 conference_df <- data.frame(
-  conference_complete=left_join_df$title.string.y,
-  ref=left_join_df$crossref.string..,
-  title=left_join_df$title.string.x,
+  conference_complete=dblp_proceedings$title.string,
+  ref=dblp_proceedings$key.string,
   conference_name=conference_name,
   conference_title = conference_title,
   conference_edition=conference_edition,
@@ -124,6 +112,11 @@ conference_df <- data.frame(
 )
 
 ## com no necessitem totes les dades, només una part -> borrem les entrades que tenen algun camp buit
-conference_df_complete <- na.omit(conference_df)
+#conference_df_complete <- na.omit(conference_df)
 
 
+# join
+dblp_inproceedings_db<-dblp_inproceedings[,c(2,9,25)]
+names(conference_df)
+left_join_df <- left_join(dblp_inproceedings_db, conference_df, by = c("crossref.string.."="ref"))
+left_join_df

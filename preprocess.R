@@ -66,8 +66,6 @@ names(dblp_proceedings_db)
 left_join_df <- left_join(dblp_inproceedings_db, dblp_proceedings_db, by = c("crossref.string.."="key.string"))
 left_join_df$title.string.y
 
-left_join_df$title.string.y
-
 #################################################
 
 conference_split <- strsplit(left_join_df$title.string.y, ", ")
@@ -114,12 +112,18 @@ conference_edition <- extract_ordinals(conference_name)
 
 
   
-# Create a data frame
 conference_df <- data.frame(
+  conference_complete=left_join_df$title.string.y,
+  ref=left_join_df$crossref.string..,
+  title=left_join_df$title.string.x,
   conference_name=conference_name,
   conference_title = conference_title,
   conference_edition=conference_edition,
   location = locations,
   year=conference_year
 )
+
+## com no necessitem totes les dades, només una part -> borrem les entrades que tenen algun camp buit
+conference_df_complete <- na.omit(conference_df)
+
 

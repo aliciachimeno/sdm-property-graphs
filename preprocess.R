@@ -1,6 +1,6 @@
 getwd()
 setwd("/Users/ali/Downloads/dblp-to-csv-master")
-
+setwd("/Users/marcforto14/Desktop/dblp-to-csv-master")
 
 library(skimr)
 library(ggplot2)
@@ -89,35 +89,162 @@ detect_location <- function(entry) {
   return(location)
 }
 locations <- sapply(conference_split, detect_location)
-conference_year <- as.numeric(sub(".*\\b(\\d{4})\\b.*", "\\1", dblp_proceedings$title.string))
-
 
 conference_title <- sub(".*?((?:Conference|Workshop).*?$)", "\\1", conference_name)
 
+# Extract the edition of each conference / workshop
 extract_ordinals <- function(names_list) {
   # Regular expression pattern to match ordinal numbers up to "30th"
-  ordinal_pattern <- "\\b(?:1st|2nd|3rd|(?:[4-9]|1[0-9]|2[0-9]|30)th|First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth|Eleventh|Twelfth|Thirteenth|Fourteenth|Fifteenth)\\b"
+  ordinal_pattern <- "\\b(?:[1-9]1?st|[1-9]2?nd|[1-9]3?rd|[4-9][0-9]?th|(1[0-9]|2[0-9]|3[0-9]|99)th|First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth|Eleventh|Twelfth|Thirteenth|Fourteenth|Fifteenth|Sixteenth|Seventeenth|Eighteenth|Nineteenth|Twentieth|Twenty-first|Twenty-second|Twenty-third|Twenty-fourth|Twenty-fifth|Twenty-sixth|Twenty-seventh|Twenty-eighth|Twenty-ninth|Thirtieth|Thirty-first|Thirty-second|Thirty-third|Thirty-fourth|Thirty-fifth|Thirty-sixth|Thirty-seventh|Thirty-eighth|Thirty-ninth|Fortieth|Forty-first|Forty-second|Forty-third|Forty-fourth|Forty-fifth|Forty-sixth|Forty-seventh|Forty-eighth|Forty-ninth|Fiftieth|Fifty-first|Fifty-second|Fifty-third|Fifty-fourth|Fifty-fifth|Fifty-sixth|Fifty-seventh|Fifty-eighth|Fifty-ninth|Sixtieth|Sixty-first|Sixty-second|Sixty-third|Sixty-fourth|Sixty-fifth|Sixty-sixth|Sixty-seventh|Sixty-eighth|Sixty-ninth|Seventieth|Seventy-first|Seventy-second|Seventy-third|Seventy-fourth|Seventy-fifth|Seventy-sixth|Seventy-seventh|Seventy-eighth|Seventy-ninth|Eightieth|Eighty-first|Eighty-second|Eighty-third|Eighty-fourth|Eighty-fifth|Eighty-sixth|Eighty-seventh|Eighty-eighth|Eighty-ninth|Ninetieth|Ninety-first|Ninety-second|Ninety-third|Ninety-fourth|Ninety-fifth|Ninety-sixth|Ninety-seventh|Ninety-eighth|Ninety-ninth)\\b"
   
   # Extract ordinal numbers from each entry
   extracted_ordinals <- regmatches(names_list, gregexpr(ordinal_pattern, names_list))
   
-  # Create a vector to store the results
+  # Create a vector to store the EDITIONS results
   result <- character(length(names_list))
   
   # Loop through each entry to assign ordinal numbers or NA
   for (i in seq_along(names_list)) {
-    if (length(extracted_ordinals[[i]]) > 0) {
-      result[i] <- extracted_ordinals[[i]]
+    if (length(extracted_ordinals[[i]]) == 1) {# if > 1, combination of conferences -> too dificult to detect
+      ordinal_text <- extracted_ordinals[[i]]
+      # Check if the ordinal text already follows the "...th" pattern
+      if (grepl("\\b(?:\\d+st|\\d+nd|\\d+rd|\\d+th)", ordinal_text)) {
+        result[i] <- ordinal_text
+      } else {
+        # Extract the numeric value from the ordinal text
+        numeric_value <- switch(ordinal_text,
+                                "First" = 1,
+                                "Second" = 2,
+                                "Third" = 3,
+                                "Fourth" = 4,
+                                "Fifth" = 5,
+                                "Sixth" = 6,
+                                "Seventh" = 7,
+                                "Eighth" = 8,
+                                "Ninth" = 9,
+                                "Tenth" = 10,
+                                "Eleventh" = 11,
+                                "Twelfth" = 12,
+                                "Thirteenth" = 13,
+                                "Fourteenth" = 14,
+                                "Fifteenth" = 15,
+                                "Sixteenth" = 16,
+                                "Seventeenth" = 17,
+                                "Eighteenth" = 18,
+                                "Nineteenth" = 19,
+                                "Twentieth" = 20,
+                                "Twenty-first" = 21,
+                                "Twenty-second" = 22,
+                                "Twenty-third" = 23,
+                                "Twenty-fourth" = 24,
+                                "Twenty-fifth" = 25,
+                                "Twenty-sixth" = 26,
+                                "Twenty-seventh" = 27,
+                                "Twenty-eighth" = 28,
+                                "Twenty-ninth" = 29,
+                                "Thirtieth" = 30,
+                                "Thirty-first" = 31,
+                                "Thirty-second" = 32,
+                                "Thirty-third" = 33,
+                                "Thirty-fourth" = 34,
+                                "Thirty-fifth" = 35,
+                                "Thirty-sixth" = 36,
+                                "Thirty-seventh" = 37,
+                                "Thirty-eighth" = 38,
+                                "Thirty-ninth" = 39,
+                                "Fortieth" = 40,
+                                "Forty-first" = 41,
+                                "Forty-second" = 42,
+                                "Forty-third" = 43,
+                                "Forty-fourth" = 44,
+                                "Forty-fifth" = 45,
+                                "Forty-sixth" = 46,
+                                "Forty-seventh" = 47,
+                                "Forty-eighth" = 48,
+                                "Forty-ninth" = 49,
+                                "Fiftieth" = 50,
+                                "Fifty-first" = 51,
+                                "Fifty-second" = 52,
+                                "Fifty-third" = 53,
+                                "Fifty-fourth" = 54,
+                                "Fifty-fifth" = 55,
+                                "Fifty-sixth" = 56,
+                                "Fifty-seventh" = 57,
+                                "Fifty-eighth" = 58,
+                                "Fifty-ninth" = 59,
+                                "Sixtieth" = 60,
+                                "Sixty-first" = 61,
+                                "Sixty-second" = 62,
+                                "Sixty-third" = 63,
+                                "Sixty-fourth" = 64,
+                                "Sixty-fifth" = 65,
+                                "Sixty-sixth" = 66,
+                                "Sixty-seventh" = 67,
+                                "Sixty-eighth" = 68,
+                                "Sixty-ninth" = 69,
+                                "Seventieth" = 70,
+                                "Seventy-first" = 71,
+                                "Seventy-second" = 72,
+                                "Seventy-third" = 73,
+                                "Seventy-fourth" = 74,
+                                "Seventy-fifth" = 75,
+                                "Seventy-sixth" = 76,
+                                "Seventy-seventh" = 77,
+                                "Seventy-eighth" = 78,
+                                "Seventy-ninth" = 79,
+                                "Eightieth" = 80,
+                                "Eighty-first" = 81,
+                                "Eighty-second" = 82,
+                                "Eighty-third" = 83,
+                                "Eighty-fourth" = 84,
+                                "Eighty-fifth" = 85,
+                                "Eighty-sixth" = 86,
+                                "Eighty-seventh" = 87,
+                                "Eighty-eighth" = 88,
+                                "Eighty-ninth" = 89,
+                                "Ninetieth" = 90,
+                                "Ninety-first" = 91,
+                                "Ninety-second" = 92,
+                                "Ninety-third" = 93,
+                                "Ninety-fourth" = 94,
+                                "Ninety-fifth" = 95,
+                                "Ninety-sixth" = 96,
+                                "Ninety-seventh" = 97,
+                                "Ninety-eighth" = 98,
+                                "Ninety-ninth" = 99)
+        result[i] <- paste0(numeric_value, "th")
+      }
     } else {
       result[i] <- NA
     }
   }
-  
   return(result)
 }
 conference_edition <- extract_ordinals(conference_name)
+table(conference_edition)
 
-  
+# # Complete now NA Edition columns
+# # Function to extract the number from the key.string column
+# extract_number <- function(string) {
+#   # Regular expression to match the number after the dash
+#   match <- regmatches(string, regexpr("\\d+-\\d+", string))
+#   if (length(match) > 0) {
+#     # Splitting the matched string by dash and returning the second part
+#     return(as.numeric(strsplit(match, "-")[[1]][2]))
+#   } else {
+#     return(NA)
+#   }
+# }
+# # Replace NAs in conference_edition with numbers from dblp_proceedings$key.string
+# for (i in 1:length(conference_edition)) {
+#   if (is.na(conference_edition[i])) {
+#     number <- extract_number(dblp_proceedings$key.string[i])
+#     if (!is.na(number)) {
+#       conference_edition[i] <- paste0(number, "th")
+#     }
+#   }
+# }
+
 conference_df <- data.frame(
   conference_complete=dblp_proceedings$title.string,
   acronym=dblp_proceedings$booktitle.string,
@@ -126,7 +253,7 @@ conference_df <- data.frame(
   conference_title = conference_title,
   conference_edition=conference_edition,
   location = locations,
-  year=conference_year
+  year=dblp_proceedings$year.int
 )
 
 ## com no necessitem totes les dades, només una part -> borrem les entrades que tenen algun camp buit

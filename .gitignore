@@ -1,1 +1,6 @@
 *pdf
+env/
+include/
+bin/
+lib/
+

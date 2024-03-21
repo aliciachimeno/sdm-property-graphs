@@ -62,6 +62,7 @@ idpaper_paper<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string
 )
+idpaper_paper
 
 ## try to join paper and author ->left join
 #l_j<-left_join(idpaper_paper,authors_papersID,by=c(c("id_paper"="id_paper"))) # ok works
@@ -255,7 +256,7 @@ conference_df <- data.frame(
   location = locations,
   year=dblp_proceedings$year.int
 )
-
+conference_df
 ## com no necessitem totes les dades, només una part -> borrem les entrades que tenen algun camp buit
 #conference_df_complete <- na.omit(conference_df)
 

@@ -23,7 +23,7 @@ dblp_article$author.string.. # string de autors
 dblp_article$ee.string.. # doi number
 dblp_article$pages.string # !!abanico de pages, no num of pages
 dblp_article$volume.string
-dblp_article[,c(1,2,13,16,24,30,34,35)]
+dblp_article[,c(1,2,13,16,24,30,34,35)]# id, author, doi, journal, pages, title, volume, year
 
 
 #########################################################################################################
@@ -52,17 +52,29 @@ authors_papersID <- data.frame(
   author = unlist(split_authors)
 )
 
-authors_papersID
-#write.csv(authors_papersID, "authors_idpapers.csv", row.names = FALSE)
+# Remove duplicate rows
+authors_papersID_uniques <- unique(authors_papersID)
+
+sample_authors<-authors_papersID_uniques[1:1000,]
+
+authors <- sample_authors[,2]
+authors <- unique(authors)
+
+write.csv(sample_authors, "clean_datasets/authors_papersID.csv", row.names = FALSE)
+write.csv(authors, "clean_datasets/authors.csv", row.names = FALSE)
 
 
 ### relation id_paper with paper
 
-idpaper_paper<- data.frame(
+paperID_paper<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string
 )
 idpaper_paper
+
+sample_papers<-paperID_paper[1:1000,]
+
+write.csv(sample_papers, "clean_datasets/paperID_paper.csv", row.names = FALSE)
 
 ## try to join paper and author ->left join
 #l_j<-left_join(idpaper_paper,authors_papersID,by=c(c("id_paper"="id_paper"))) # ok works

@@ -3,4 +3,5 @@ env/
 include/
 bin/
 lib/
+config.py
 

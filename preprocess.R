@@ -70,7 +70,6 @@ paperID_paper<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string
 )
-idpaper_paper
 
 sample_papers<-paperID_paper[1:1000,]
 
@@ -268,7 +267,7 @@ conference_df <- data.frame(
   location = locations,
   year=dblp_proceedings$year.int
 )
-conference_df
+
 ## com no necessitem totes les dades, només una part -> borrem les entrades que tenen algun camp buit
 #conference_df_complete <- na.omit(conference_df)
 

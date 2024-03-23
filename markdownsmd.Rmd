@@ -10,12 +10,6 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-
-# Section 1
-This is the content of Section 1.
-
-<details>
-<summary>Libraries</summary>
 ```{r}
 library(skimr)
 library(ggplot2)
@@ -23,38 +17,24 @@ library(tidyverse)
 library(dplyr)
 ```
 
-
 ```{r}
 getwd()
 setwd("/Users/ali/Downloads/dblp-to-csv-master")
 #setwd("/Users/marcforto14/Desktop/dblp-to-csv-master")
 ```
 
-
-</details>
-
-# Section 2 : papers <-> journals
-This is the content of Section 2.
-
-<details>
-<summary>Loading Data</summary>
+# papers <-> journals
 
 ```{r}
-dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, encoding = "latin1",nrows=100000) # load
-dblp_article_header<-read.csv("dblp_article_header.csv",sep=";",row.names =NULL, encoding = "latin1") # load header
+dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000) # load
+dblp_article_header<-read.csv("dblp_article_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8") # load header
 colnames(dblp_article)<-names(dblp_article_header) # put the header
 ```
-</details>
-<details>
-<summary>Data Exploration</summary>
 
 only want to keep: paper, authors, title, journal, volume, year, doi,
 ```{r}
 names(dblp_article)
-```
 
-
-```{r}
 dblp_article$article.ID # id
 dblp_article$author.string.. # string de autors
 dblp_article$ee.string.. # doi number
@@ -63,19 +43,42 @@ dblp_article$volume.string
 ```
 
 ```{r}
-dblp_article[,c(1,2,13,16,24,30,34,35)]# id, author, doi, journal, pages, title, volume, year
+#filter columns
+dblp_article <- dblp_article[,c(1,2,13,16,24,30,34,35)]# id, author, doi, journal, pages, title, volume, year
+
+split_authors <- strsplit(dblp_article$author.string.., "\\|") # split els authors
+
+authors_paperID_1 <- data.frame(
+  id_paper = rep(dblp_article$article.ID, sapply(split_authors, length)),
+  author = unlist(split_authors)
+)
+
+# if its the first author -> main 
+mark_main_author <- function(group) {
+  first_author <- group$author[1]
+  group$main_author <- ifelse(startsWith(group$author, first_author), TRUE, FALSE)
+  return(group)
+}
+
+authors_paperID_1 <- authors_paperID_1 %>%
+  group_by(id_paper) %>%
+  do(mark_main_author(.))
+
+authors_1 <- unique(authors_paperID_1[,2])  # save authors names
 ```
-</details>
 
-# Section 3 : papers <-> conferences INPROCEEDINGS
+```{r}
+papers_1 <- dblp_article[,c(1,6,3,5,8)]#falta abstract
+```
 
-<details>
-<summary>Inproceedings</summary>
+
+
+# papers <-> conferences INPROCEEDINGS
 
 Dades dels *papers*:
 ```{r}
-dblp_inproceedings<-read.csv("dblp_inproceedings.csv",sep=";",row.names =NULL, encoding = "latin1",nrows=100000)
-dblp_inproceedings_header<-read.csv("dblp_inproceedings_header.csv",sep=";",row.names =NULL, encoding = "latin1")
+dblp_inproceedings<-read.csv("dblp_inproceedings.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000)
+dblp_inproceedings_header<-read.csv("dblp_inproceedings_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8")
 colnames(dblp_inproceedings)<-names(dblp_inproceedings_header)
 ```
 
@@ -92,16 +95,12 @@ Create a dataframe with: id_paper-author (2 nodes 1 edge)
 ```{r}
 split_authors <- strsplit(dblp_inproceedings$author.string.., "\\|") # split els authors
 
-authors_papersID <- data.frame(
+authors_papersID_2 <- data.frame(
   id_paper = rep(dblp_inproceedings$inproceedings.ID, sapply(split_authors, length)),
   author = unlist(split_authors)
 )
 
-authors_papersID_uniques <- unique(authors_papersID) # remove duplicate rows (id_paper, author)
-
-sample_authors<-authors_papersID_uniques[1:1000,] # sample
-
-authors <- unique(sample_authors[,2])  # remove duplicate authors
+authors_papersID_2 <- unique(authors_papersID_2) # remove duplicate rows (id_paper, author)
 
 # if its the first author -> main 
 mark_main_author <- function(group) {
@@ -109,28 +108,30 @@ mark_main_author <- function(group) {
   group$main_author <- ifelse(startsWith(group$author, first_author), TRUE, FALSE)
   return(group)
 }
-authors_papersID <- authors_papersID %>%
+authors_papersID_2 <- authors_papersID_2 %>%
   group_by(id_paper) %>%
   do(mark_main_author(.))
 
-write.csv(authors_papersID, "clean_datasets/authors_papersID.csv", row.names = FALSE) # df relation paperid-authors (edge)
-write.csv(authors, "clean_datasets/authors.csv", row.names = FALSE) # df authors (node)
+authors_2 <- unique(authors_papersID_2[,2])  # save only unique authors names
+
+# write.csv(authors_papersID, "clean_datasets/authors_papersID.csv", row.names = FALSE) # df relation paperid-authors (edge)
+# write.csv(authors, "clean_datasets/authors.csv", row.names = FALSE) # df authors (node)
 
 ```
 
-Node papers: idpaper-title
+Node papers: idpaper-title-DOI-year-abstract
 ```{r}
 paperID_paper<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string
 )
 idpaper_paper
-sample_papers<-paperID_paper[1:1000,]
-write.csv(paperID_paper, "paperID_paper.csv", row.names = FALSE)
 
+write.csv(paperID_paper, "paperID_paper.csv", row.names = FALSE)
 ```
 
-</details>
+
+
 
 # Section 4 : papers <-> conferences PROCEEDINGS
 Dades de les CONFERENCES

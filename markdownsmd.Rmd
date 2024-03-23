@@ -106,14 +106,14 @@ authors <- unique(sample_authors[,2])  # remove duplicate authors
 # if its the first author -> main 
 mark_main_author <- function(group) {
   first_author <- group$author[1]
-  group$main_author <- ifelse(startsWith(group$author, first_author), 'Main Author', '')
+  group$main_author <- ifelse(startsWith(group$author, first_author), TRUE, FALSE)
   return(group)
 }
 authors_papersID <- authors_papersID %>%
   group_by(id_paper) %>%
   do(mark_main_author(.))
 
-write.csv(authors_papersID, "authors_papersID.csv", row.names = FALSE) # df relation paperid-authors (edge)
+write.csv(authors_papersID, "clean_datasets/authors_papersID.csv", row.names = FALSE) # df relation paperid-authors (edge)
 write.csv(authors, "clean_datasets/authors.csv", row.names = FALSE) # df authors (node)
 
 ```

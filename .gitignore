@@ -4,4 +4,4 @@ include/
 bin/
 lib/
 config.py
-
+pyvenv.cfg

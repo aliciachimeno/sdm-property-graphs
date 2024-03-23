@@ -15,6 +15,10 @@ library(skimr)
 library(ggplot2)
 library(tidyverse)
 library(dplyr)
+install.packages("stringi")
+library(stringi)
+library(devtools)
+
 ```
 
 ```{r}
@@ -23,29 +27,59 @@ setwd("/Users/ali/Downloads/dblp-to-csv-master")
 #setwd("/Users/marcforto14/Desktop/dblp-to-csv-master")
 ```
 
-# papers <-> journals
+# SECTION 1: papers <-> journals
 
+Load:
 ```{r}
 dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000) # load
 dblp_article_header<-read.csv("dblp_article_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8") # load header
 colnames(dblp_article)<-names(dblp_article_header) # put the header
 ```
 
-only want to keep: paper, authors, title, journal, volume, year, doi,
+Select:
+Only want to keep: paper, authors, title, journal, volume, year, doi,
 ```{r}
 names(dblp_article)
-
 dblp_article$article.ID # id
 dblp_article$author.string.. # string de autors
 dblp_article$ee.string.. # doi number
 dblp_article$pages.string # !!abanico de pages, no num of pages
 dblp_article$volume.string
+dblp_article$title.string
 ```
 
+Function to count the pages:
+```{r}
+compute_pages <- function(page_range) {
+  pages <- as.integer(unlist(strsplit(page_range, "-")))
+  if (length(pages) == 1) {
+    return(1)
+  } else {
+    return(pages[2] - pages[1] + 1)
+  }
+}
+
+total_pages <- 0*c(1:nrow(dblp_article))
+
+for (i in 1:nrow(dblp_article)) {
+  total_pages[i] <- compute_pages(dblp_article$pages.string[i])
+}
+total_pages
+total_pages[999];dblp_article[999,24] #814-775 està bé
+dblp_article$numpages<-total_pages
+```
+
++Select:
 ```{r}
 #filter columns
-dblp_article <- dblp_article[,c(1,2,13,16,24,30,34,35)]# id, author, doi, journal, pages, title, volume, year
+names(dblp_article)
+dblp_article <- dblp_article[,c(1,2,13,16,24,30,34,35,36)]# id, author, doi, journal, pages, title, volume, year
+```
 
+- Split authors
+- Create node df/csv of authors: :=authors_1. 
+- Create csv/df relation authors-papers:= authors_paperID_1
+```{r}
 split_authors <- strsplit(dblp_article$author.string.., "\\|") # split els authors
 
 authors_paperID_1 <- data.frame(
@@ -67,10 +101,22 @@ authors_paperID_1 <- authors_paperID_1 %>%
 authors_1 <- unique(authors_paperID_1[,2])  # save authors names
 ```
 
+Generate abstracts:
 ```{r}
-papers_1 <- dblp_article[,c(1,6,3,5,8)]#falta abstract
+generate_abstract <- function() {
+  lorem_ipsum <- stri_rand_lipsum(1)  # Generate random Lorem Ipsum text
+  return(lorem_ipsum)
+}
+dblp_article$abstract <- sapply(dblp_article$article.ID, function(x) generate_abstract())
 ```
 
+
++ Select/project. Create node df of papers (+metadata of papers)  :=papers_1
+```{r}
+names(dblp_article)
+papers_1 <- dblp_article[,c(1,6,3,8,9,10) ]
+papers_1
+```
 
 
 # papers <-> conferences INPROCEEDINGS

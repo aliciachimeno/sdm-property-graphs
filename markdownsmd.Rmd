@@ -18,7 +18,6 @@ library(dplyr)
 install.packages("stringi")
 library(stringi)
 library(devtools)
-
 ```
 
 ```{r}
@@ -64,7 +63,6 @@ total_pages <- 0*c(1:nrow(dblp_article))
 for (i in 1:nrow(dblp_article)) {
   total_pages[i] <- compute_pages(dblp_article$pages.string[i])
 }
-total_pages
 total_pages[999];dblp_article[999,24] #814-775 està bé
 dblp_article$numpages<-total_pages
 ```
@@ -73,7 +71,7 @@ dblp_article$numpages<-total_pages
 ```{r}
 #filter columns
 names(dblp_article)
-dblp_article <- dblp_article[,c(1,2,13,16,24,30,34,35,36)]# id, author, doi, journal, pages, title, volume, year
+dblp_article <- dblp_article[,c(1,2,13,16,30,34,35,36)]# id, author, doi, journal, pages, title, volume, year
 ```
 
 - Split authors
@@ -110,22 +108,40 @@ generate_abstract <- function() {
 dblp_article$abstract <- sapply(dblp_article$article.ID, function(x) generate_abstract())
 ```
 
-
 + Select/project. Create node df of papers (+metadata of papers)  :=papers_1
 ```{r}
 names(dblp_article)
-papers_1 <- dblp_article[,c(1,6,3,8,9,10) ]
-papers_1
+papers_1<- data.frame(
+  id_paper=dblp_article$article.ID,
+  paper_title=dblp_article$title.string,
+  doi = dblp_article$ee.string..,
+  abstract = dblp_article$abstract
+)
 ```
 
-
-# papers <-> conferences INPROCEEDINGS
+# SECTION 2: papers <-> conferences INPROCEEDINGS
 
 Dades dels *papers*:
 ```{r}
 dblp_inproceedings<-read.csv("dblp_inproceedings.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000)
 dblp_inproceedings_header<-read.csv("dblp_inproceedings_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8")
 colnames(dblp_inproceedings)<-names(dblp_inproceedings_header)
+```
+
+Count the pages:
+```{r}
+total_pages <- 0*c(1:nrow(dblp_inproceedings))
+
+for (i in 1:nrow(dblp_inproceedings)) {
+  total_pages[i] <- compute_pages(dblp_inproceedings$pages.string[i])
+}
+total_pages
+dblp_inproceedings$numpages<-total_pages
+```
+
+Generate abstracts:
+```{r}
+dblp_inproceedings$abstract <- sapply(dblp_inproceedings$inproceedings.ID, function(x) generate_abstract())
 ```
 
 ```{r}
@@ -141,12 +157,12 @@ Create a dataframe with: id_paper-author (2 nodes 1 edge)
 ```{r}
 split_authors <- strsplit(dblp_inproceedings$author.string.., "\\|") # split els authors
 
-authors_papersID_2 <- data.frame(
+authors_paperID_2 <- data.frame(
   id_paper = rep(dblp_inproceedings$inproceedings.ID, sapply(split_authors, length)),
   author = unlist(split_authors)
 )
 
-authors_papersID_2 <- unique(authors_papersID_2) # remove duplicate rows (id_paper, author)
+authors_paperID_2 <- unique(authors_paperID_2) # remove duplicate rows (id_paper, author)
 
 # if its the first author -> main 
 mark_main_author <- function(group) {
@@ -154,30 +170,38 @@ mark_main_author <- function(group) {
   group$main_author <- ifelse(startsWith(group$author, first_author), TRUE, FALSE)
   return(group)
 }
-authors_papersID_2 <- authors_papersID_2 %>%
+authors_paperID_2 <- authors_paperID_2 %>%
   group_by(id_paper) %>%
   do(mark_main_author(.))
 
-authors_2 <- unique(authors_papersID_2[,2])  # save only unique authors names
-
-# write.csv(authors_papersID, "clean_datasets/authors_papersID.csv", row.names = FALSE) # df relation paperid-authors (edge)
-# write.csv(authors, "clean_datasets/authors.csv", row.names = FALSE) # df authors (node)
-
+authors_2 <- unique(authors_paperID_2[,2])  # save only unique authors names
 ```
 
-Node papers: idpaper-title-DOI-year-abstract
+Node papers: idpaper-title-DOI-abstract
 ```{r}
-paperID_paper<- data.frame(
+papers_2<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
-  paper_title=dblp_inproceedings$title.string
+  paper_title=dblp_inproceedings$title.string,
+  doi = dblp_inproceedings$ee.string..,
+  abstract = dblp_inproceedings$abstract
 )
-idpaper_paper
-
-write.csv(paperID_paper, "paperID_paper.csv", row.names = FALSE)
 ```
 
+## Combine and create CSV
 
+```{r}
+# Combine the two data frames using rbind
+papers_df <- rbind(papers_1, papers_2)
 
+authors_df <- rbind(authors_1, authors_2)
+authors_df <- unique(authors_df)
+
+authors_paperID_rel <- rbind(authors_paperID_1, authors_paperID_2)
+
+write.csv(papers_df, "clean_datasets/papers_df.csv", row.names = FALSE) # df papers (node)
+write.csv(authors_df, "clean_datasets/authors_df.csv", row.names = FALSE) # df authors (node)
+write.csv(authors_df, "clean_datasets/authors_paperID_rel.csv", row.names = FALSE) # df authors papers (relation)
+```
 
 # Section 4 : papers <-> conferences PROCEEDINGS
 Dades de les CONFERENCES

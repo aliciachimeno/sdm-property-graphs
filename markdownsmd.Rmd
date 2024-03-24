@@ -15,7 +15,6 @@ library(skimr)
 library(ggplot2)
 library(tidyverse)
 library(dplyr)
-install.packages("stringi")
 library(stringi)
 library(devtools)
 ```
@@ -183,7 +182,8 @@ papers_2<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string,
   doi = dblp_inproceedings$ee.string..,
-  abstract = dblp_inproceedings$abstract
+  abstract = dblp_inproceedings$abstract,
+  ref_conference = dblp_inproceedings$crossref.string..
 )
 ```
 
@@ -397,6 +397,8 @@ dblp_topics<-read.csv("data_topics.csv",row.names =NULL, encoding = "latin1",hea
 dblp_topics
 ```
 
+
+
 # Section 6: cites
 We will assume that if two papers have the 1st same keyword (the most probable) , then their content is related. 
 For each paper we will assign a random number - from 0-5 that will indicate the number of cites this paper has. 
@@ -416,37 +418,16 @@ agrupem per cada keyword_1 ->
 
 ```{r}
 df_list <- split(cites_df, cites_df$keyword_1)
-
-print(df_list)
-#AI:
-list<-as.list(df_list$AI["id_paper"])
-
-
-for (i in 1:nrow(df_list$AI)) {
-  random_numbers <- sample(list$id_paper, ncites)
-}
-```
-
-```{r}
-
-df_list$AI$cites <- NA
-for (i in 1:nrow(df_list$AI)) {
-  id_paper <- df_list$AI[i, "id_paper"]
-  ncites <- df_list$AI[i, "ncites"]
-  random_numbers <- sample(df_list$AI$id_paper, ncites, replace = FALSE)
-  print(random_numbers)
-  df_list$AI[i, "cites"] <- paste(random_numbers, collapse = ",")
-}
-# separem les cites en columnes
-df_list$AI <- separate(df_list$AI, cites, into = paste0("cites_", 1:5), sep = ",", fill = "right")
+names(df_list)
 df_list$AI
-
 ```
 
 
-
 ```{r}
-for (topic in names(df_list)) {
+names(df_list)
+df_list[c(2:15)]
+names(df_list[c(2:15)])
+for (topic in names(df_list[c(2:15)])) {
   # Set 'cites' column to NA
   df_list[[topic]]$cites <- NA
   
@@ -465,8 +446,18 @@ for (topic in names(df_list)) {
   df_list[[topic]] <- separate(df_list[[topic]], cites, into = paste0("cites_", 1:5), sep = ",", fill = "right")
 }
 
+df_list[c(2:15)]
+
 ```
 
-ho
+Find the top 3 most cited papers of each conference.
 
+```{r}
+df_list
+
+# conference list 
+```
+
+
+# Section 7: reviewers 
 

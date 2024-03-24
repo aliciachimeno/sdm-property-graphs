@@ -197,7 +197,7 @@ authors_df <- unique(authors_df)
 
 authors_paperID_rel <- rbind(authors_paperID_1, authors_paperID_2)
 
-#write.csv(papers_df, "clean_datasets/papers_df.csv", row.names = FALSE) # df papers (node)
+write.csv(papers_df, "papers_df.csv", row.names = FALSE) # df papers (node)
 #write.csv(authors_df, "clean_datasets/authors_df.csv", row.names = FALSE) # df authors (node)
 #write.csv(authors_df, "clean_datasets/authors_paperID_rel.csv", row.names = FALSE) # df authors papers (relation)
 ```
@@ -405,6 +405,7 @@ head(papers_conferences)
 Amb Python 
 
 ```{r}
+setwd("/Users/ali/Desktop/MASTER/Semestre 2/SDM/lab/PropertyGraph/Sense nom/PropertyGraphs_SDM/data")
 dblp_topics<-read.csv("data_topics.csv",row.names =NULL, encoding = "latin1",header=TRUE)
 dblp_topics
 ```
@@ -437,9 +438,9 @@ df_list$AI
 
 ```{r}
 names(df_list)
-df_list[c(2:15)]
-names(df_list[c(2:15)])
-for (topic in names(df_list[c(2:15)])) {
+df_list[c(1:14)]
+names(df_list[c(1:14)])
+for (topic in names(df_list[c(1:14)])) {
   # Set 'cites' column to NA
   df_list[[topic]]$cites <- NA
   
@@ -458,8 +459,8 @@ for (topic in names(df_list[c(2:15)])) {
   df_list[[topic]] <- separate(df_list[[topic]], cites, into = paste0("cites_", 1:5), sep = ",", fill = "right")
 }
 
-df_list[c(2:15)]
-names(df_list[c(2:15)])
+df_list[c(1:14)]
+names(df_list[c(1:14)])
 
 ```
 
@@ -468,8 +469,15 @@ Find the top 3 most cited papers of each conference.
 ```{r}
 # conference list 
 
-merged_df <- Reduce(function(x, y) merge(x, y, by =c("id_paper","keyword_1","ncites","cites_1","cites_2","cites_3","cites_4","cites_5"), all = TRUE), df_list[2:15])
+merged_df <- Reduce(function(x, y) merge(x, y, by=c("id_paper","keyword_1","ncites","cites_1","cites_2","cites_3","cites_4","cites_5"), all = TRUE), df_list[1:14])
 merged_df<-unique(merged_df)
+
+```
+
+delete papaer that cite themself
+
+```{r}
+
 
 ```
 

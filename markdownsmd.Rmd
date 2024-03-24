@@ -182,8 +182,7 @@ papers_2<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string,
   doi = dblp_inproceedings$ee.string..,
-  abstract = dblp_inproceedings$abstract,
-  ref_conference = dblp_inproceedings$crossref.string..
+  abstract = dblp_inproceedings$abstract
 )
 ```
 
@@ -198,9 +197,9 @@ authors_df <- unique(authors_df)
 
 authors_paperID_rel <- rbind(authors_paperID_1, authors_paperID_2)
 
-write.csv(papers_df, "clean_datasets/papers_df.csv", row.names = FALSE) # df papers (node)
-write.csv(authors_df, "clean_datasets/authors_df.csv", row.names = FALSE) # df authors (node)
-write.csv(authors_df, "clean_datasets/authors_paperID_rel.csv", row.names = FALSE) # df authors papers (relation)
+#write.csv(papers_df, "clean_datasets/papers_df.csv", row.names = FALSE) # df papers (node)
+#write.csv(authors_df, "clean_datasets/authors_df.csv", row.names = FALSE) # df authors (node)
+#write.csv(authors_df, "clean_datasets/authors_paperID_rel.csv", row.names = FALSE) # df authors papers (relation)
 ```
 
 # Section 4 : papers <-> conferences PROCEEDINGS
@@ -369,23 +368,36 @@ extract_ordinals <- function(names_list) {
   return(result)
 }
 conference_edition <- extract_ordinals(conference_name)
-table(conference_edition)
+#table(conference_edition)
 ```
 
 
 ```{r}
 conference_df <- data.frame(
+  ref=dblp_proceedings$key.string,
   conference_complete=dblp_proceedings$title.string,
   acronym=dblp_proceedings$booktitle.string,
-  ref=dblp_proceedings$key.string,
   conference_name=conference_name,
   conference_title = conference_title,
   conference_edition=conference_edition,
   location = locations,
   year=dblp_proceedings$year.int
 )
-conference_df
+head(conference_df)
 ```
+
+
+relation paper (conferences) - conferences
+```{r}
+papers_conferences<- data.frame(
+  id_paper=dblp_inproceedings$inproceedings.ID,
+  ref_conf=dblp_inproceedings$crossref.string..
+)
+
+head(papers_conferences)
+
+```
+
 
 </details>
 
@@ -447,15 +459,18 @@ for (topic in names(df_list[c(2:15)])) {
 }
 
 df_list[c(2:15)]
+names(df_list[c(2:15)])
 
 ```
 
 Find the top 3 most cited papers of each conference.
 
 ```{r}
-df_list
-
 # conference list 
+
+merged_df <- Reduce(function(x, y) merge(x, y, by =c("id_paper","keyword_1","ncites","cites_1","cites_2","cites_3","cites_4","cites_5"), all = TRUE), df_list[2:15])
+merged_df<-unique(merged_df)
+
 ```
 
 

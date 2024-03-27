@@ -10,6 +10,7 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+# library
 ```{r}
 library(skimr)
 library(ggplot2)
@@ -18,7 +19,7 @@ library(dplyr)
 library(stringi)
 library(devtools)
 ```
-
+# load
 ```{r}
 getwd()
 setwd("/Users/ali/Downloads/dblp-to-csv-master")
@@ -73,13 +74,11 @@ names(dblp_article)
 dblp_article <- dblp_article[,c(1,2,13,16,30,34,35,36)]# id, author, doi, journal, pages, title, volume, year
 ```
 
-- Split authors
-- Create node df/csv of authors: :=authors_1. 
-- Create csv/df relation authors-papers:= authors_paperID_1
+Edge between papers (journals) and authors: Edge_papers_author_1
 ```{r}
 split_authors <- strsplit(dblp_article$author.string.., "\\|") # split els authors
 
-authors_paperID_1 <- data.frame(
+Edge_papers_author_1 <- data.frame(
   id_paper = rep(dblp_article$article.ID, sapply(split_authors, length)),
   author = unlist(split_authors)
 )
@@ -91,11 +90,14 @@ mark_main_author <- function(group) {
   return(group)
 }
 
-authors_paperID_1 <- authors_paperID_1 %>%
+Edge_papers_author_1 <- Edge_papers_author_1 %>%
   group_by(id_paper) %>%
   do(mark_main_author(.))
+```
 
-authors_1 <- unique(authors_paperID_1[,2])  # save authors names
+Node authors: Node_authors_1
+```{r}
+node_authors_1 <- unique(Edge_papers_author_1[,2])  # save authors names
 ```
 
 Generate abstracts:
@@ -107,16 +109,34 @@ generate_abstract <- function() {
 dblp_article$abstract <- sapply(dblp_article$article.ID, function(x) generate_abstract())
 ```
 
-+ Select/project. Create node df of papers (+metadata of papers)  :=papers_1
+
+Node_papers_1
 ```{r}
 names(dblp_article)
-papers_1<- data.frame(
+Node_papers_1<- data.frame(
   id_paper=dblp_article$article.ID,
   paper_title=dblp_article$title.string,
   doi = dblp_article$ee.string..,
   abstract = dblp_article$abstract
 )
+Node_papers_1
 ```
+
+
+Edge between paper(journal) - journal: Edge_paper_journal
+```{r}
+Edge_paper_journal <- data.frame(
+  id_paper = dblp_article$article.ID,
+  journal = dblp_article$journal.string
+)
+Edge_paper_journal
+```
+
+Node: Node_journals
+```{r}
+Node_journals <- unique(Edge_paper_journal[,2])
+```
+
 
 # SECTION 2: papers <-> conferences INPROCEEDINGS
 
@@ -184,13 +204,15 @@ papers_2<- data.frame(
   doi = dblp_inproceedings$ee.string..,
   abstract = dblp_inproceedings$abstract
 )
+papers_2[,1:3]
+dblp_inproceedings
 ```
 
 ## Combine and create CSV
 
 ```{r}
 # Combine the two data frames using rbind
-papers_df <- rbind(papers_1, papers_2)
+papers_df <- rbind(Node_papers_1, papers_2)
 
 authors_df <- rbind(authors_1, authors_2)
 authors_df <- unique(authors_df)
@@ -369,6 +391,8 @@ extract_ordinals <- function(names_list) {
 }
 conference_edition <- extract_ordinals(conference_name)
 #table(conference_edition)
+names(dblp_proceedings)
+unique(dblp_proceedings$booktitle.string)
 ```
 
 
@@ -475,12 +499,34 @@ merged_df<-unique(merged_df)
 ```
 
 delete papaer that cite themself
-
 ```{r}
-
+dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000) # load
 
 ```
 
 
-# Section 7: reviewers 
+# Section 7: reviewrs
+articles - authors
+
+```{r}
+names(papers_df)
+Node_papers_1 # papers (journal)
+papers_2 # papers (conference)
+authors_1 #authors (journal)
+authors_2 #authors (conference)
+authors_paperID_rel # edge paper-author
+
+# paper -conference
+conference_df #conference
+# paper -journal
+
+
+```
+
+community is de ned through
+the following keywords: data management, indexing, data modeling, big data, data
+processing, data storage and data querying.
+
+agrupar papers per conference / per journal
+
 

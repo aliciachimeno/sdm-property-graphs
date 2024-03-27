@@ -434,7 +434,17 @@ Amb Python
 ```{r}
 setwd("/Users/ali/Desktop/MASTER/Semestre 2/SDM/lab/PropertyGraph/Sense nom/PropertyGraphs_SDM/data")
 dblp_topics<-read.csv("data_topics.csv",row.names =NULL, encoding = "latin1",header=TRUE)
-dblp_topics
+```
+
+Edge_papers_keywords
+```{r}
+Edge_papers_keywords<-dblp_topics[,c(1,5,6,7)]
+```
+
+Node_keywords
+```{r}
+Node_keywords <- unique(Edge_papers_keywords[,2])
+
 ```
 
 
@@ -491,116 +501,36 @@ names(df_list[c(1:14)])
 
 ```
 
-Find the top 3 most cited papers of each conference.
-
+merge all lists
 ```{r}
-# conference list 
-
 merged_df <- Reduce(function(x, y) merge(x, y, by=c("id_paper","keyword_1","ncites","cites_1","cites_2","cites_3","cites_4","cites_5"), all = TRUE), df_list[1:14])
-merged_df<-unique(merged_df)
 
 ```
 
-delete papaer that cite themself
+cannot cite himself , convertim en NA quan es cita a ell mateix
+```{r}
 
-# Section 7: reviewrs
+#  convertir en NA el num que es ell mateix
+merged_df$cites_1 <- ifelse(merged_df$id_paper == merged_df$cites_1, NA, merged_df$cites_1)
+merged_df$cites_2 <- ifelse(merged_df$id_paper == merged_df$cites_2 , NA, merged_df$cites_2)
+merged_df$cites_3 <- ifelse(merged_df$id_paper == merged_df$cites_3, NA, merged_df$cites_3)
+merged_df$cites_4 <- ifelse(merged_df$id_paper == merged_df$cites_4, NA, merged_df$cites_4)
+merged_df$cites_5 <- ifelse(merged_df$id_paper == merged_df$cites_5, NA, merged_df$cites_5)
 
+# comprovem
+merged_df_wrong <- merged_df[merged_df$id_paper == merged_df$cites_1 |
+                             merged_df$id_paper == merged_df$cites_2 |
+                             merged_df$id_paper == merged_df$cites_3 |
+                             merged_df$id_paper == merged_df$cites_4 |
+                             merged_df$id_paper == merged_df$cites_5, ]
 
+merged_df_wrong[complete.cases(merged_df_wrong), ]
+
+```
 
 ```{r}
-names(Node_papers_2)
-names(Edge_papers_conferences)
-left_join_df <- left_join(Node_papers_2,Edge_papers_conferences, by = c("id_paper"="id_paper"))
-names(Node_conference)
-left_join_df2 <- left_join(left_join_df,Node_conference, by = c("ref_conf"="ref"))
-left_join_df2
-names(left_join_df2)
-# subset each of each conference 
-unique(left_join_df2$acronym) # 20
+names(merged_df)
+Edge_cites<-merged_df[,c(1,4:8)]
+Edge_cites
 ```
 
-join amb les keywords
-```{r}
-dblp_topics
-
-left_join_df2_3 <- left_join(left_join_df2,dblp_topics, by = c("id_paper"="id_paper"))
-# id paper, keywords i conferences
-
-left_join_df2_list <- split(left_join_df2_3, left_join_df2_3$acronym)
-
-ACML<-left_join_df2_list$ACML
-names(ACML)
-
-
-keywords_db_community <- c("data management", "indexing", "data modeling", "big data", "data processing", "data storage", "data querying")
-
-
-# Filter the dataset to keep rows where at least one of the specified columns contains one of the specific values
-filtered_df <- ACML %>%
-  filter(
-    (keyword_1 %in% keywords_db_community) | 
-    (keyword_2 %in% keywords_db_community) | 
-    (keyword_3 %in% keywords_db_community)
-  )
-filtered_df
-
-names(filtered_df)
-disjunction_df <- anti_join(ACML,filtered_df)
-
-num_no_filter<-round(nrow(ACML)*0.1)
-num_si_filter<-round(nrow(ACML)*0.9)
-
-df_fin<-rbind(disjunction_df[1:num_no_filter,],filtered_df[1:num_si_filter,])
-
-
-
-```
-
-
-```{r}
-apply_filter_and_mix <- function(df) {
-  filtered_df <- df %>%
-    filter(
-      (keyword_1 %in% keywords_db_community) | 
-      (keyword_2 %in% keywords_db_community) | 
-      (keyword_3 %in% keywords_db_community)
-    )
-  
-  num_no_filter <- round(nrow(df) * 0.1)
-  num_si_filter <- round(nrow(df) * 0.9)
-  disjunction_df <- anti_join(df, filtered_df)
-  df_fin <- rbind(disjunction_df[1:num_no_filter, ], filtered_df[1:num_si_filter, ])
-  return(df_fin)
-}
-filtered_list <- lapply(left_join_df2_list,apply_filter_and_mix)
-
-```
-
-
-Next, we need to and the conferences and journals related to the database community
-(i.e., are specic to the  eld of databases). Assume that if 90% of the papers published
-in a conference/journal contain one of the keywords of the database community we
-consider that conference/journal as related to that community.
-
-
-```{r}
-keywords_db_community <- c("data management", "indexing", "data modeling", "big data", "data processing", "data storage", "data querying")
-
-filter_and_keep_90_percent <- function(df) {
-  filtered_df <- df %>%
-    filter(
-      (keyword_1 %in% keywords_db_community) | 
-      (keyword_2 %in% keywords_db_community) | 
-      (keyword_3 %in% keywords_db_community)
-    )
-  
-  rows_to_keep <- round(0.9 * nrow(filtered_df))
-  
-  filtered_df <- head(filtered_df, rows_to_keep)
-  
-  return(filtered_df)
-}
-
-filtered_list <- lapply(left_join_df2_list, filter_and_keep_90_percent)
-
-```

@@ -10,7 +10,7 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-# library
+libraries
 ```{r}
 library(skimr)
 library(ggplot2)
@@ -19,7 +19,8 @@ library(dplyr)
 library(stringi)
 library(devtools)
 ```
-# load
+
+load
 ```{r}
 getwd()
 setwd("/Users/ali/Downloads/dblp-to-csv-master")
@@ -74,7 +75,7 @@ names(dblp_article)
 dblp_article <- dblp_article[,c(1,2,13,16,30,34,35,36)]# id, author, doi, journal, pages, title, volume, year
 ```
 
-Edge between papers (journals) and authors: Edge_papers_author_1
+Edge_papers_author_1
 ```{r}
 split_authors <- strsplit(dblp_article$author.string.., "\\|") # split els authors
 
@@ -95,9 +96,9 @@ Edge_papers_author_1 <- Edge_papers_author_1 %>%
   do(mark_main_author(.))
 ```
 
-Node authors: Node_authors_1
+Node_authors_1
 ```{r}
-node_authors_1 <- unique(Edge_papers_author_1[,2])  # save authors names
+Node_authors_1 <- unique(Edge_papers_author_1[,2])  # save authors names
 ```
 
 Generate abstracts:
@@ -108,7 +109,6 @@ generate_abstract <- function() {
 }
 dblp_article$abstract <- sapply(dblp_article$article.ID, function(x) generate_abstract())
 ```
-
 
 Node_papers_1
 ```{r}
@@ -123,7 +123,7 @@ Node_papers_1
 ```
 
 
-Edge between paper(journal) - journal: Edge_paper_journal
+Edge_paper_journal:
 ```{r}
 Edge_paper_journal <- data.frame(
   id_paper = dblp_article$article.ID,
@@ -132,7 +132,7 @@ Edge_paper_journal <- data.frame(
 Edge_paper_journal
 ```
 
-Node: Node_journals
+Node_journals:
 ```{r}
 Node_journals <- unique(Edge_paper_journal[,2])
 ```
@@ -173,15 +173,17 @@ dblp_inproceedings$inproceedings.ID # id dels papers
 ```
 
 Create a dataframe with: id_paper-author (2 nodes 1 edge)
+
+Edge_papers_author_2
 ```{r}
 split_authors <- strsplit(dblp_inproceedings$author.string.., "\\|") # split els authors
 
-authors_paperID_2 <- data.frame(
+Edge_papers_author_2 <- data.frame(
   id_paper = rep(dblp_inproceedings$inproceedings.ID, sapply(split_authors, length)),
   author = unlist(split_authors)
 )
 
-authors_paperID_2 <- unique(authors_paperID_2) # remove duplicate rows (id_paper, author)
+Edge_papers_author_2 <- unique(Edge_papers_author_2) # remove duplicate rows (id_paper, author)
 
 # if its the first author -> main 
 mark_main_author <- function(group) {
@@ -189,35 +191,37 @@ mark_main_author <- function(group) {
   group$main_author <- ifelse(startsWith(group$author, first_author), TRUE, FALSE)
   return(group)
 }
-authors_paperID_2 <- authors_paperID_2 %>%
+Edge_papers_author_2 <- Edge_papers_author_2 %>%
   group_by(id_paper) %>%
   do(mark_main_author(.))
+```
 
-authors_2 <- unique(authors_paperID_2[,2])  # save only unique authors names
+Node_authors_2
+```{r}
+Node_authors_2 <- unique(Edge_papers_author_2[,2])  # save only unique authors names
 ```
 
 Node papers: idpaper-title-DOI-abstract
 ```{r}
-papers_2<- data.frame(
+Node_papers_2<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string,
   doi = dblp_inproceedings$ee.string..,
   abstract = dblp_inproceedings$abstract
 )
-papers_2[,1:3]
-dblp_inproceedings
 ```
 
 ## Combine and create CSV
 
 ```{r}
 # Combine the two data frames using rbind
-papers_df <- rbind(Node_papers_1, papers_2)
+Node_paper <- rbind(Node_papers_1, Node_papers_2)
+Node_paper
+Node_author <- rbind(Node_authors_1, Node_authors_2)
+Node_author <- unique(Node_author)
+Node_author
 
-authors_df <- rbind(authors_1, authors_2)
-authors_df <- unique(authors_df)
-
-authors_paperID_rel <- rbind(authors_paperID_1, authors_paperID_2)
+Edge_papers_author <- rbind(Edge_papers_author_1, Edge_papers_author_2)
 
 write.csv(papers_df, "papers_df.csv", row.names = FALSE) # df papers (node)
 #write.csv(authors_df, "clean_datasets/authors_df.csv", row.names = FALSE) # df authors (node)
@@ -227,8 +231,6 @@ write.csv(papers_df, "papers_df.csv", row.names = FALSE) # df papers (node)
 # Section 4 : papers <-> conferences PROCEEDINGS
 Dades de les CONFERENCES
 
-<details>
-<summary>conferences</summary>
 ```{r}
 dblp_proceedings<-read.csv("dblp_proceedings.csv",sep=";",row.names =NULL, encoding = "latin1",nrows=100000)
 dblp_proceedings_header<-read.csv("dblp_proceedings_header.csv",sep=";",row.names =NULL, encoding = "latin1")
@@ -397,7 +399,7 @@ unique(dblp_proceedings$booktitle.string)
 
 
 ```{r}
-conference_df <- data.frame(
+Node_conference <- data.frame(
   ref=dblp_proceedings$key.string,
   conference_complete=dblp_proceedings$title.string,
   acronym=dblp_proceedings$booktitle.string,
@@ -407,23 +409,24 @@ conference_df <- data.frame(
   location = locations,
   year=dblp_proceedings$year.int
 )
-head(conference_df)
+head(Node_conference)
 ```
 
 
-relation paper (conferences) - conferences
+Edge_papers_conferences
 ```{r}
-papers_conferences<- data.frame(
+Edge_papers_conferences<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   ref_conf=dblp_inproceedings$crossref.string..
 )
-
-head(papers_conferences)
+head(Edge_papers_conferences)
 
 ```
 
 
-</details>
+
+
+
 
 # Section 5: topics
 Amb Python 
@@ -499,34 +502,105 @@ merged_df<-unique(merged_df)
 ```
 
 delete papaer that cite themself
-```{r}
-dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000) # load
-
-```
-
 
 # Section 7: reviewrs
-articles - authors
+
+
 
 ```{r}
-names(papers_df)
-Node_papers_1 # papers (journal)
-papers_2 # papers (conference)
-authors_1 #authors (journal)
-authors_2 #authors (conference)
-authors_paperID_rel # edge paper-author
+names(Node_papers_2)
+names(Edge_papers_conferences)
+left_join_df <- left_join(Node_papers_2,Edge_papers_conferences, by = c("id_paper"="id_paper"))
+names(Node_conference)
+left_join_df2 <- left_join(left_join_df,Node_conference, by = c("ref_conf"="ref"))
+left_join_df2
+names(left_join_df2)
+# subset each of each conference 
+unique(left_join_df2$acronym) # 20
+```
 
-# paper -conference
-conference_df #conference
-# paper -journal
+join amb les keywords
+```{r}
+dblp_topics
+
+left_join_df2_3 <- left_join(left_join_df2,dblp_topics, by = c("id_paper"="id_paper"))
+# id paper, keywords i conferences
+
+left_join_df2_list <- split(left_join_df2_3, left_join_df2_3$acronym)
+
+ACML<-left_join_df2_list$ACML
+names(ACML)
+
+
+keywords_db_community <- c("data management", "indexing", "data modeling", "big data", "data processing", "data storage", "data querying")
+
+
+# Filter the dataset to keep rows where at least one of the specified columns contains one of the specific values
+filtered_df <- ACML %>%
+  filter(
+    (keyword_1 %in% keywords_db_community) | 
+    (keyword_2 %in% keywords_db_community) | 
+    (keyword_3 %in% keywords_db_community)
+  )
+filtered_df
+
+names(filtered_df)
+disjunction_df <- anti_join(ACML,filtered_df)
+
+num_no_filter<-round(nrow(ACML)*0.1)
+num_si_filter<-round(nrow(ACML)*0.9)
+
+df_fin<-rbind(disjunction_df[1:num_no_filter,],filtered_df[1:num_si_filter,])
+
 
 
 ```
 
-community is de ned through
-the following keywords: data management, indexing, data modeling, big data, data
-processing, data storage and data querying.
 
-agrupar papers per conference / per journal
+```{r}
+apply_filter_and_mix <- function(df) {
+  filtered_df <- df %>%
+    filter(
+      (keyword_1 %in% keywords_db_community) | 
+      (keyword_2 %in% keywords_db_community) | 
+      (keyword_3 %in% keywords_db_community)
+    )
+  
+  num_no_filter <- round(nrow(df) * 0.1)
+  num_si_filter <- round(nrow(df) * 0.9)
+  disjunction_df <- anti_join(df, filtered_df)
+  df_fin <- rbind(disjunction_df[1:num_no_filter, ], filtered_df[1:num_si_filter, ])
+  return(df_fin)
+}
+filtered_list <- lapply(left_join_df2_list,apply_filter_and_mix)
+
+```
 
 
+Next, we need to and the conferences and journals related to the database community
+(i.e., are specic to the  eld of databases). Assume that if 90% of the papers published
+in a conference/journal contain one of the keywords of the database community we
+consider that conference/journal as related to that community.
+
+
+```{r}
+keywords_db_community <- c("data management", "indexing", "data modeling", "big data", "data processing", "data storage", "data querying")
+
+filter_and_keep_90_percent <- function(df) {
+  filtered_df <- df %>%
+    filter(
+      (keyword_1 %in% keywords_db_community) | 
+      (keyword_2 %in% keywords_db_community) | 
+      (keyword_3 %in% keywords_db_community)
+    )
+  
+  rows_to_keep <- round(0.9 * nrow(filtered_df))
+  
+  filtered_df <- head(filtered_df, rows_to_keep)
+  
+  return(filtered_df)
+}
+
+filtered_list <- lapply(left_join_df2_list, filter_and_keep_90_percent)
+
+```

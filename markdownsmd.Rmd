@@ -31,22 +31,11 @@ setwd("/Users/ali/Downloads/dblp-to-csv-master")
 
 Load:
 ```{r}
-dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=150) # load
+dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000) # load
 dblp_article_header<-read.csv("dblp_article_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8") # load header
 colnames(dblp_article)<-names(dblp_article_header) # put the header
 ```
 
-Select:
-Only want to keep: paper, authors, title, journal, volume, year, doi,
-```{r}
-names(dblp_article)
-dblp_article$article.ID # id
-dblp_article$author.string.. # string de autors
-dblp_article$ee.string.. # doi number
-dblp_article$pages.string # !!abanico de pages, no num of pages
-dblp_article$volume.string
-dblp_article$title.string
-```
 
 Function to count the pages:
 ```{r}
@@ -68,19 +57,70 @@ for (i in 1:nrow(dblp_article)) {
 dblp_article$numpages<-total_pages
 ```
 
-+Select:
+Filtrem:
 ```{r}
-#filter columns
-names(dblp_article)
-dblp_article <- dblp_article[,c(1,2,13,16,30,34,35,36)]# id, author, doi, journal, pages, title, volume, year
+Edge_paper_volumes_try1 <- data.frame(
+  id_paper = dblp_article$article.ID,
+  id_volume = paste(dblp_article$volume.string, dblp_article$journal.string, sep = " "),
+  volume = dblp_article$volume.string,
+  journal=dblp_article$journal.string
+)
+keep_repeated_values <- function(lst) {
+  counts <- table(lst)
+  repeated_values <- names(counts[counts >= 2])
+  return(repeated_values)
+}
+vol<-keep_repeated_values(Edge_paper_volumes_try1$id_volume) # volumes that have 2 or more papers
+pap_in_vol<-Edge_paper_volumes_try1$id_paper[Edge_paper_volumes_try1$id_volume %in% vol]
+Edge_paper_volumes_try1[Edge_paper_volumes_try1$id_paper %in%pap_in_vol,]
 ```
+
+Node_volume
+```{r}
+Node_volume<-data.frame(
+  id_volume=vol)
+write.csv(Node_volume, "Node_volume.csv", row.names = FALSE) 
+
+```
+
+Edge_paper_volumes
+```{r}
+Edge_paper_volumes <- Edge_paper_volumes_try1[Edge_paper_volumes_try1$id_volume %in% vol,c(1,2)]
+write.csv(Edge_paper_volumes, "Edge_paper_volumes.csv", row.names = FALSE) 
+
+```
+
+dblp_article_filtered
+```{r}
+dblp_article_filtered<-dblp_article[dblp_article$article.ID %in% pap_in_vol,]
+```
+
+
+Edge_volume_journal:
+```{r}
+Edge_volume_journal <- data.frame(
+  id_volume = dblp_article$id_volume,
+  journal = dblp_article$journal
+)
+Edge_volume_journal
+write.csv(Edge_volume_journal, "Edge_volume_journal.csv", row.names = FALSE) 
+
+```
+
+Node_journals:
+```{r}
+Node_journals <- unique(Edge_volume_journal[2])
+write.csv(Node_journals, "Node_journals.csv", row.names = FALSE) 
+```
+
 
 Edge_papers_author_1
 ```{r}
-split_authors <- strsplit(dblp_article$author.string.., "\\|") # split els authors
+
+split_authors <- strsplit(dblp_article_filtered$author.string.., "\\|") # split els authors
 
 Edge_papers_author_1 <- data.frame(
-  id_paper = rep(dblp_article$article.ID, sapply(split_authors, length)),
+  id_paper = rep(dblp_article_filtered$article.ID, sapply(split_authors, length)),
   author = unlist(split_authors)
 )
 
@@ -94,6 +134,8 @@ mark_main_author <- function(group) {
 Edge_papers_author_1 <- Edge_papers_author_1 %>%
   group_by(id_paper) %>%
   do(mark_main_author(.))
+
+Edge_papers_author_1 # edge amb property. de la relation 
 ```
 
 Node_authors_1
@@ -107,67 +149,19 @@ generate_abstract <- function() {
   lorem_ipsum <- stri_rand_lipsum(1)  # Generate random Lorem Ipsum text
   return(lorem_ipsum)
 }
-dblp_article$abstract <- sapply(dblp_article$article.ID, function(x) generate_abstract())
+dblp_article_filtered$abstract <- sapply(dblp_article_filtered$article.ID, function(x) generate_abstract())
 ```
 
 Node_papers_1
 ```{r}
-names(dblp_article)
+names(dblp_article_filtered)
 Node_papers_1<- data.frame(
-  id_paper=dblp_article$article.ID,
-  paper_title=dblp_article$title.string,
-  doi = dblp_article$ee.string..,
-  abstract = dblp_article$abstract
+  id_paper=dblp_article_filtered$article.ID,
+  paper_title=dblp_article_filtered$title.string,
+  doi = dblp_article_filtered$ee.string..,
+  abstract = dblp_article_filtered$abstract
 )
 Node_papers_1
-```
-
-Edge_papers_volumes
-```{r}
-Edge_paper_volumes <- data.frame(
-  id_paper = dblp_article$article.ID,
-  id_volume = paste(dblp_article$volume.string, dblp_article$journal.string, sep = " "),
-  volume = dblp_article$volume.string
-)
-
-write.csv(Edge_paper_volumes, "Edge_paper_volumes.csv", row.names = FALSE) 
-
-```
-
-Node_volumes
-```{r}
-Node_volumes <- data.frame(
-  volume =unique(Edge_paper_volumes$id_volume)
-)
-
-write.csv(Node_volumes, "Node_volumes.csv", row.names = FALSE) 
-
-```
-
-
-Edge_paper_journal:
-```{r}
-Edge_paper_journal <- data.frame(
-  id_paper = dblp_article$article.ID,
-  journal = dblp_article$journal.string
-)
-Edge_paper_journal
-write.csv(Edge_paper_journal, "Edge_paper_journal.csv", row.names = FALSE) 
-
-```
-
-Node_journals:
-```{r}
-Node_journals <- unique(Edge_paper_journal[,2])
-write.csv(Node_journals, "Node_journals.csv", row.names = FALSE) 
-
-```
-
-Node_volumes:
-```{r}
-Node_volumes<-unique(dblp_article$volume.string)
-write.csv(Node_volumes, "Node_volumes.csv", row.names = FALSE) 
-
 ```
 
 
@@ -175,7 +169,7 @@ write.csv(Node_volumes, "Node_volumes.csv", row.names = FALSE)
 
 Dades dels *papers*:
 ```{r}
-dblp_inproceedings<-read.csv("dblp_inproceedings.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=150)
+dblp_inproceedings<-read.csv("dblp_inproceedings.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000)
 dblp_inproceedings_header<-read.csv("dblp_inproceedings_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8")
 colnames(dblp_inproceedings)<-names(dblp_inproceedings_header)
 ```

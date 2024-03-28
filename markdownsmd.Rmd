@@ -31,7 +31,7 @@ setwd("/Users/ali/Downloads/dblp-to-csv-master")
 
 Load:
 ```{r}
-dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000) # load
+dblp_article<-read.csv("dblp_article.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=150) # load
 dblp_article_header<-read.csv("dblp_article_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8") # load header
 colnames(dblp_article)<-names(dblp_article_header) # put the header
 ```
@@ -64,7 +64,7 @@ total_pages <- 0*c(1:nrow(dblp_article))
 for (i in 1:nrow(dblp_article)) {
   total_pages[i] <- compute_pages(dblp_article$pages.string[i])
 }
-total_pages[999];dblp_article[999,24] #814-775 està bé
+#total_pages[999];dblp_article[999,24] #814-775 està bé
 dblp_article$numpages<-total_pages
 ```
 
@@ -122,6 +122,28 @@ Node_papers_1<- data.frame(
 Node_papers_1
 ```
 
+Edge_papers_volumes
+```{r}
+Edge_paper_volumes <- data.frame(
+  id_paper = dblp_article$article.ID,
+  id_volume = paste(dblp_article$volume.string, dblp_article$journal.string, sep = " "),
+  volume = dblp_article$volume.string
+)
+
+write.csv(Edge_paper_volumes, "Edge_paper_volumes.csv", row.names = FALSE) 
+
+```
+
+Node_volumes
+```{r}
+Node_volumes <- data.frame(
+  volume =unique(Edge_paper_volumes$id_volume)
+)
+
+write.csv(Node_volumes, "Node_volumes.csv", row.names = FALSE) 
+
+```
+
 
 Edge_paper_journal:
 ```{r}
@@ -130,16 +152,22 @@ Edge_paper_journal <- data.frame(
   journal = dblp_article$journal.string
 )
 Edge_paper_journal
+write.csv(Edge_paper_journal, "Edge_paper_journal.csv", row.names = FALSE) 
+
 ```
 
 Node_journals:
 ```{r}
 Node_journals <- unique(Edge_paper_journal[,2])
+write.csv(Node_journals, "Node_journals.csv", row.names = FALSE) 
+
 ```
 
 Node_volumes:
 ```{r}
-unique(dblp_article$volume.string)
+Node_volumes<-unique(dblp_article$volume.string)
+write.csv(Node_volumes, "Node_volumes.csv", row.names = FALSE) 
+
 ```
 
 
@@ -147,7 +175,7 @@ unique(dblp_article$volume.string)
 
 Dades dels *papers*:
 ```{r}
-dblp_inproceedings<-read.csv("dblp_inproceedings.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=1000)
+dblp_inproceedings<-read.csv("dblp_inproceedings.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8",nrows=150)
 dblp_inproceedings_header<-read.csv("dblp_inproceedings_header.csv",sep=";",row.names =NULL, fileEncoding = "UTF-8")
 colnames(dblp_inproceedings)<-names(dblp_inproceedings_header)
 ```
@@ -220,15 +248,17 @@ Node_papers_2<- data.frame(
 # Combine the two data frames using rbind
 Node_paper <- rbind(Node_papers_1, Node_papers_2)
 Node_paper
+names(Node_paper)
 Node_author <- rbind(Node_authors_1, Node_authors_2)
 Node_author <- unique(Node_author)
 Node_author
+skim(Node_author)
 
 Edge_papers_author <- rbind(Edge_papers_author_1, Edge_papers_author_2)
 
-write.csv(papers_df, "papers_df.csv", row.names = FALSE) # df papers (node)
-#write.csv(authors_df, "clean_datasets/authors_df.csv", row.names = FALSE) # df authors (node)
-#write.csv(authors_df, "clean_datasets/authors_paperID_rel.csv", row.names = FALSE) # df authors papers (relation)
+write.csv(Node_paper, "Node_paper.csv", row.names = FALSE) # df papers (node)
+write.csv(Node_author, "Node_author.csv", row.names = FALSE) # df authors (node)
+write.csv(Edge_papers_author, "Edge_papers_author.csv", row.names = FALSE) # df authors papers (relation)
 ```
 
 # Section 4 : papers <-> conferences PROCEEDINGS
@@ -400,29 +430,70 @@ names(dblp_proceedings)
 unique(dblp_proceedings$booktitle.string)
 ```
 
-
+union edition and papers
 ```{r}
-Node_conference <- data.frame(
-  ref=dblp_proceedings$key.string,
-  conference_complete=dblp_proceedings$title.string,
-  acronym=dblp_proceedings$booktitle.string,
+left_join_df <- left_join(Node_paper, conference_df, by = c("crossref.string.."="ref"))
+names(Edge_papers_edition)
+
+unique(Edge_papers_edition$ref_conf)
+```
+
+
+Node_edition
+```{r}
+Node_edition_try <- data.frame(
+  ref_edition=dblp_proceedings$key.string,
+  editio_complete=dblp_proceedings$title.string,
+  acronym=dblp_proceedings$booktitle.string, #acronym conference
   conference_name=conference_name,
   conference_title = conference_title,
   conference_edition=conference_edition,
   location = locations,
   year=dblp_proceedings$year.int
 )
-head(Node_conference)
+
+Node_edition<- data.frame(
+  ref_edition=dblp_proceedings$key.string,
+  edition=dblp_proceedings$title.string,
+  edition_num=conference_edition,
+  location = locations,
+  year=dblp_proceedings$year.int
+)
+
+write.csv(Node_edition, "Node_edition.csv", row.names = FALSE) 
+
+names(Node_edition)
 ```
 
 
-Edge_papers_conferences
+Edge_edition_conference
 ```{r}
-Edge_papers_conferences<- data.frame(
+
+Edge_edition_conference<- data.frame(
+  ref_edition=dblp_proceedings$key.string,
+  conference=dblp_proceedings$booktitle.string #acronym conference
+)
+
+
+```
+
+Node_conference
+```{r}
+
+Node_conference<- data.frame(
+  unique(dblp_proceedings$booktitle.string)
+  
+)
+```
+
+
+Edge_papers_edition
+```{r}
+Edge_papers_edition_all<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   ref_conf=dblp_inproceedings$crossref.string..
 )
-head(Edge_papers_conferences)
+papers_1$id_paper
 
 ```
 
@@ -551,5 +622,48 @@ long_df <- pivot_longer(Edge_cites_cols, cols = -id_paper, names_to = "cites_num
 long_df <- long_df[complete.cases(long_df$cites_value), ]
 Edge_cites<-long_df[,c(1,3)]
 Edge_cites
+```
+
+
+# Section 7: reviews
+
+for each paper assign 3 authors reviewers ? 
+```{r}
+Node_author
+
+Node_paper$id_paper
+set.seed(123)
+sample_data1 <- sample(Node_author$author, nrow(Node_paper), replace = TRUE)
+set.seed(124)
+sample_data2 <- sample(Node_author$author, nrow(Node_paper), replace = TRUE)
+set.seed(125)
+sample_data3 <- sample(Node_author$author, nrow(Node_paper), replace = TRUE)
+```
+
+Node paper-author juntem per comprovar q un author no pot fer review del seu paper: 
+```{r}
+
+Edge_papers_author
+
+dataf<-data.frame(
+  idpap=Node_paper$id_paper,
+  author1=sample_data1,
+  author2=sample_data2,
+  author3=sample_data3
+)
+dataf # per cada id he creat 3 autors relacionats
+
+left_join_df<- left_join(Edge_papers_author,dataf, by = c("id_paper"="idpap"))
+# mirar que no reviewing el seu paper: 
+
+left_join_df[left_join_df$author == left_join_df$author1, ] # exemple malament
+
+left_join_df$author1 <- ifelse(left_join_df$author == left_join_df$author1, NA, left_join_df$author1)
+left_join_df$author2 <- ifelse(left_join_df$author == left_join_df$author2 , NA, left_join_df$author2)
+left_join_df$author3 <- ifelse(left_join_df$author == left_join_df$author3, NA, left_join_df$author3)
+
+left_join_df
+
+
 ```
 

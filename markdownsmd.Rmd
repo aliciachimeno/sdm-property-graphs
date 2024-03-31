@@ -99,8 +99,8 @@ dblp_article_filtered<-dblp_article[dblp_article$article.ID %in% pap_in_vol,]
 Edge_volume_journal:
 ```{r}
 Edge_volume_journal <- data.frame(
-  id_volume = dblp_article$id_volume,
-  journal = dblp_article$journal
+  id_volume = Edge_paper_volumes_try1$id_volume,
+  journal = Edge_paper_volumes_try1$journal
 )
 Edge_volume_journal
 write.csv(Edge_volume_journal, "Edge_volume_journal.csv", row.names = FALSE) 

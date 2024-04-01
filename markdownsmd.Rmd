@@ -103,8 +103,7 @@ Edge_volume_journal <- data.frame(
   journal = Edge_paper_volumes_try1$journal
 )
 Edge_volume_journal
-write.csv(Edge_volume_journal, "Edge_volume_journal.csv", row.names = FALSE) 
-
+write.csv(Edge_volume_journal, "Edge_volume_journal.csv", row.names = FALSE)
 ```
 
 Node_journals:

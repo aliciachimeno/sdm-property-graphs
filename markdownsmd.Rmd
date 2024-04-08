@@ -23,8 +23,8 @@ library(devtools)
 load
 ```{r}
 getwd()
-setwd("/Users/ali/Downloads/dblp-to-csv-master")
-#setwd("/Users/marcforto14/Desktop/dblp-to-csv-master")
+#setwd("/Users/ali/Downloads/dblp-to-csv-master")
+setwd("/Users/marcforto14/Desktop/dblp-to-csv-master")
 ```
 
 # SECTION 1: papers <-> journals
@@ -40,12 +40,12 @@ Select:
 Only want to keep: paper, authors, title, journal, volume, year, doi,
 ```{r}
 names(dblp_article)
-dblp_article$article.ID # id
-dblp_article$author.string.. # string de autors
-dblp_article$ee.string.. # doi number
-dblp_article$pages.string # !!abanico de pages, no num of pages
-dblp_article$volume.string
-dblp_article$title.string
+# dblp_article$article.ID # id
+# dblp_article$author.string.. # string de autors
+# dblp_article$ee.string.. # doi number
+# dblp_article$pages.string # !!abanico de pages, no num of pages
+# dblp_article$volume.string
+# dblp_article$title.string
 ```
 
 Function to count the pages:
@@ -130,7 +130,7 @@ Edge_paper_volumes <- data.frame(
   volume = dblp_article$volume.string
 )
 
-write.csv(Edge_paper_volumes, "Edge_paper_volumes.csv", row.names = FALSE) 
+write.csv(Edge_paper_volumes, "clean_datasets/Edge_paper_volumes.csv", row.names = FALSE) 
 
 ```
 
@@ -139,8 +139,7 @@ Node_volumes
 Node_volume <- data.frame(
   volume =unique(Edge_paper_volumes$id_volume)
 )
-write.csv(Node_volume, "Node_volume.csv", row.names = FALSE) 
-names(Node_volume)
+write.csv(Node_volume, "clean_datasets/Node_volumes.csv", row.names = FALSE) 
 ```
 
 
@@ -150,17 +149,15 @@ Edge_paper_journal <- data.frame(
   id_paper = dblp_article$article.ID,
   journal = dblp_article$journal.string
 )
-Edge_paper_journal
-write.csv(Edge_paper_journal, "Edge_paper_journal.csv", row.names = FALSE) 
-
+write.csv(Edge_paper_journal, "clean_datasets/Edge_paper_journal.csv", row.names = FALSE) 
 ```
 
 Node_journals:
 ```{r}
 Node_journals <- unique(Edge_paper_journal[,2])
-write.csv(Node_journals, "Node_journals.csv", row.names = FALSE) 
-
+write.csv(Node_journals, "clean_datasets/Node_journals.csv", row.names = FALSE) 
 ```
+
 
 # SECTION 2: papers <-> conferences INPROCEEDINGS
 
@@ -247,9 +244,9 @@ skim(Node_author)
 
 Edge_papers_author <- rbind(Edge_papers_author_1, Edge_papers_author_2)
 
-write.csv(Node_paper, "Node_paper.csv", row.names = FALSE) # df papers (node)
-write.csv(Node_author, "Node_author.csv", row.names = FALSE) # df authors (node)
-write.csv(Edge_papers_author, "Edge_papers_author.csv", row.names = FALSE) # df authors papers (relation)
+write.csv(Node_paper, "clean_datasets/Node_paper.csv", row.names = FALSE) # df papers (node)
+write.csv(Node_author, "clean_datasets/Node_author.csv", row.names = FALSE) # df authors (node)
+write.csv(Edge_papers_author, "clean_datasets/Edge_papers_author.csv", row.names = FALSE) # df authors papers (relation)
 ```
 
 # Section 4 : papers <-> conferences PROCEEDINGS
@@ -269,7 +266,7 @@ dblp_proceedings$booktitle.string # conference / workshop name
 dblp_proceedings$key.string # key
 ```
 
-
+Find location
 ```{r}
 conference_split <- strsplit(dblp_proceedings$title.string, ", ")
 conference_split[[945]] # example of entry
@@ -282,7 +279,6 @@ detect_location <- function(entry) {
 }
 locations <- sapply(conference_split, detect_location)
 conference_title <- sub(".*?((?:Conference|Workshop).*?$)", "\\1", conference_name)
-
 ```
 
 
@@ -443,7 +439,7 @@ Node_edition<- data.frame(
   year=dblp_proceedings$year.int
 )
 
-write.csv(Node_edition, "Node_edition.csv", row.names = FALSE) 
+write.csv(Node_edition, "clean_datasets/Node_edition.csv", row.names = FALSE) 
 
 names(Node_edition)
 ```
@@ -457,19 +453,16 @@ Edge_edition_conference<- data.frame(
   conference=dblp_proceedings$booktitle.string #acronym conference
 )
 
-write.csv(Edge_edition_conference, "Edge_edition_conference.csv", row.names = FALSE) 
-
+write.csv(Edge_edition_conference, "clean_datasets/Edge_edition_conference.csv", row.names = FALSE) 
 ```
 
 Node_conference
 ```{r}
-
 Node_conference<- data.frame(
   unique(dblp_proceedings$booktitle.string)
 )
 Node_conference
-write.csv(Node_conference, "Node_conference.csv", row.names = FALSE) 
-
+write.csv(Node_conference, "clean_datasets/Node_conference.csv", row.names = FALSE) 
 ```
 
 
@@ -479,18 +472,15 @@ Edge_papers_edition<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   ref_edition=dblp_inproceedings$crossref.string..
 )
-
-write.csv(Edge_papers_edition, "Edge_papers_edition.csv", row.names = FALSE) 
-
+write.csv(Edge_papers_edition, "clean_datasets/Edge_papers_edition.csv", row.names = FALSE) 
 ```
-
-
 
 
 # Section 5: topics
 Amb Python 
 ```{r}
-setwd("/Users/ali/Desktop/MASTER/Semestre 2/SDM/lab/PropertyGraph/Sense nom/PropertyGraphs_SDM/data")
+setwd("/Users/marcforto14/Desktop/SDM/LAB/property_graphs/data")
+#setwd("/Users/ali/Desktop/MASTER/Semestre 2/SDM/lab/PropertyGraph/Sense nom/PropertyGraphs_SDM/data")
 dblp_topics<-read.csv("data_topics.csv",row.names =NULL, encoding = "latin1",header=TRUE)
 ```
 
@@ -510,13 +500,9 @@ nsoe <- pivot_longer(Edge_papers_keywords, cols = -id_paper, values_to = "keywor
 
 Edge_keywords_paper (altre format)
 ```{r}
-Edge_papers_keywords<-nsoe[,c(1,3)]
-Edge_papers_keywords
-write.csv(Edge_papers_keywords, "Edge_papers_keywords.csv", row.names = FALSE)
-
+Edge_keywords<-nsoe[,c(1,3)]
+Edge_keywords
 ```
-
-
 
 # Section 6: cites
 We will assume that if two papers have the 1st same keyword (the most probable) , then their content is related. 
@@ -604,7 +590,6 @@ Edge_cites_cols
 
 Nose si s'ha de fer aquest format:
 ```{r}
-
 long_df <- pivot_longer(Edge_cites_cols, cols = -id_paper, names_to = "cites_number", values_to = "cites_value")
 long_df <- long_df[complete.cases(long_df$cites_value), ]
 Edge_paper_paper<-long_df[,c(1,3)]

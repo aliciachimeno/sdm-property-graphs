@@ -128,35 +128,42 @@ Edge_papers_volumes
 Edge_paper_volumes <- data.frame(
   id_paper = dblp_article$article.ID,
   id_volume = paste(dblp_article$volume.string, dblp_article$journal.string, sep = " "),
-  volume = dblp_article$volume.string
+  volume = dblp_article$volume.string,
+  year=dblp_article$year.int
 )
 
-write.csv(Edge_paper_volumes, "clean_datasets/Edge_paper_volumes.csv", row.names = FALSE) 
+write.csv(Edge_paper_volumes, "Edge_paper_volumes.csv", row.names = FALSE) 
 
 ```
 
 Node_volumes
 ```{r}
 Node_volume <- data.frame(
-  volume =unique(Edge_paper_volumes$id_volume)
+  volume =Edge_paper_volumes$id_volume,
+  year=Edge_paper_volumes$year
 )
-write.csv(Node_volume, "clean_datasets/Node_volumes.csv", row.names = FALSE) 
+Node_volume<-unique(Node_volume)
+
+write.csv(Node_volume, "Node_volumes.csv", row.names = FALSE) 
 ```
 
 
 Edge_paper_journal:
 ```{r}
-Edge_paper_journal <- data.frame(
-  id_paper = dblp_article$article.ID,
-  journal = dblp_article$journal.string
+
+Edge_volumes_journal <- data.frame(
+  id_volume = paste(dblp_article$volume.string, dblp_article$journal.string, sep = " "),
+  journal=dblp_article$journal.string
 )
-write.csv(Edge_paper_journal, "clean_datasets/Edge_paper_journal.csv", row.names = FALSE) 
+
+write.csv(Edge_volumes_journal, "Edge_volumes_journal.csv", row.names = FALSE) 
 ```
 
 Node_journals:
 ```{r}
-Node_journals <- unique(Edge_paper_journal[,2])
-write.csv(Node_journals, "clean_datasets/Node_journals.csv", row.names = FALSE) 
+Node_journals <- unique(Edge_volumes_journal[,2])
+write.csv(Node_journals, "Node_journals.csv", row.names = FALSE) 
+
 ```
 
 

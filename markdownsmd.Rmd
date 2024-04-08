@@ -117,7 +117,8 @@ Node_papers_1<- data.frame(
   id_paper=dblp_article$article.ID,
   paper_title=dblp_article$title.string,
   doi = dblp_article$ee.string..,
-  abstract = dblp_article$abstract
+  abstract = dblp_article$abstract,
+  pages=dblp_article$numpages
 )
 Node_papers_1
 ```
@@ -226,7 +227,9 @@ Node_papers_2<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   paper_title=dblp_inproceedings$title.string,
   doi = dblp_inproceedings$ee.string..,
-  abstract = dblp_inproceedings$abstract
+  abstract = dblp_inproceedings$abstract,
+  pages = dblp_inproceedings$numpages
+  
 )
 ```
 
@@ -514,10 +517,15 @@ Edge_papers_keywords<-dblp_topics[,c(1,5)]
 
 Node_keywords
 ```{r}
-Node_keywords <- unique(Edge_papers_keywords[,4])
+Node_keywords<- data.frame(
+  keywords= as.data.frame(unique(Edge_papers_keywords[,4]))
+)
 Node_keywords
 
+write.csv(Node_keywords, "Node_keywords.csv", row.names = FALSE) 
+
 nsoe <- pivot_longer(Edge_papers_keywords, cols = -id_paper, values_to = "keywords")
+
 ```
 
 Edge_keywords_paper (altre format)

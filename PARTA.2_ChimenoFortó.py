@@ -1,63 +1,116 @@
 # https://neo4j.com/docs/python-manual/current/
-import os
-from neo4j import GraphDatabase
-from config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD
+from neo4j_classes import Neo4jConnection
+from neo4jconfig import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, BASE_URL
 
 # Neo4j connection parameters
 uri = NEO4J_URI  
 username = NEO4J_USERNAME        
 password = NEO4J_PASSWORD
+base_url = BASE_URL
 
-class Neo4jConnection:
-    def __init__(self, uri, user, pwd):
-        self.__uri = uri
-        self.__user = user
-        self.__pwd = pwd
-        self.__driver = None
-        try:
-            self.__driver = GraphDatabase.driver(self.__uri, auth=(self.__user, self.__pwd))
-        except Exception as e:
-            print("Failed to create the driver:", e)
-        
-    def close(self):
-        if self.__driver is not None:
-            self.__driver.close()
-        
-    def delete_all_nodes_and_relationships(self):
-        with self.__driver.session() as session:
-            session.run("MATCH (n) DETACH DELETE n")
-            print("All nodes and relationships deleted.")
-    
-    def load_csv_data(self, url):
-        with self.__driver.session() as session:
-            session.run(url)
-            print("CSV data loaded successfully.")
+def main():
+    # Connect to Neo4j
+    connection = Neo4jConnection(uri, username, password)
+     
+    # Queries to execute, formatted for readability
+    queries = [
 
-# Connect to Neo4j
-connection = Neo4jConnection(uri, username, password)
+        f"""
+        MATCH (n)
+        DETACH DELETE n
+        """,
 
-# Load Author nodes from CSV
-author_load = """
-LOAD CSV WITH HEADERS FROM 'http://localhost:11001/project-1de224d0-cae0-497a-820c-bcc46684fd5f/authors.csv' AS row
-MERGE (a:Author {name: row.x})
-"""
-connection.load_csv_data(author_load)
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_author.csv' AS row
+        MERGE (a:Author {{name: row.author}})
+        """,
 
-# Load Paper nodes from CSV
-paper_load = """
-LOAD CSV WITH HEADERS FROM 'http://localhost:11001/project-1de224d0-cae0-497a-820c-bcc46684fd5f/paperID_paper.csv' AS row
-MERGE (p:Paper {name: row.paper_title, paperID: row.id_paper})
-"""
-connection.load_csv_data(paper_load)
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_paper.csv' AS row
+        MERGE (a:Papers {{name: row.paper_title, id: row.id_paper, doi: row.doi, abstract: row.abstract, pages: row.pages}})
+        """,
 
-# Create relationships between Authors and Papers
-relationship_load = """
-LOAD CSV WITH HEADERS FROM 'http://localhost:11001/project-1de224d0-cae0-497a-820c-bcc46684fd5f/authors_papersID.csv' AS row
-MATCH (p:Paper {paperID: row.id_paper})
-MATCH (a:Author {name: row.author})
-MERGE (a)-[r:WRITES]->(p)
-"""
-connection.load_csv_data(relationship_load)
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_papers_author.csv' AS row
+        MATCH (a:Author {{name: row.author}})
+        MATCH (b:Papers {{id: row.id_paper}})
+        MERGE (a)-[r:writes {{main_author: row.main_author}}]->(b);
+        """,
 
-# Close the connection
-connection.close()
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_volumes.csv' AS row
+        MERGE (a:Volume {{name: row.volume, year: row.year}})
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_edition.csv' AS row
+        MERGE (a:Edition {{name: row.edition, ref_edition: row.ref_edition, num: row.edition_num, location: row.location, year: row.year}})
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_conference.csv' AS row
+        MERGE (a:Conference {{name: row.conference}})
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_edition_conference.csv' AS row
+        MATCH (a:Edition {{ref_edition: row.ref_edition}})
+        MATCH (b:Conference {{name: row.conference}})
+        MERGE (a)-[r:belongs_to]->(b);
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_paper_volumes.csv' AS row
+        MATCH (a:Papers {{id: row.id_paper}})
+        MATCH (b:Volume {{name: row.id_volume}})
+        MERGE (a)-[r:contained_in]->(b);
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_paper_paper.csv' AS row
+        MATCH (a:Papers {{id: row.id_paper}})
+        MATCH (b:Papers {{id: row.cites_value}})
+        MERGE (a)-[r:cites]->(b);
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_papers_edition.csv' AS row
+        MATCH (a:Papers {{id: row.id_paper}})
+        MATCH (b:Edition {{ref_edition: row.ref_edition}})
+        MERGE (a)-[r:published_in]->(b);
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_keywords.csv' AS row
+        MERGE (a:Keywords {{name: row.Node_keywords}})
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_papers_keywords.csv' AS row
+        MATCH (a:Papers {{id: row.id_paper}})
+        MATCH (b:Keywords {{name: row.keywords}})
+        MERGE (a)-[r:relates_to]->(b);
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_journals.csv' AS row
+        MERGE (a:Journals {{name: row.x}})
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_volumes_journal.csv' AS row
+        MATCH (a:Volume {{name: row.id_volume}})
+        MATCH (b:Journals {{name: row.journal}})
+        MERGE (a)-[r:belongs_to]->(b);
+        """
+    ]
+
+    # Execute each query, respecting the readable formatting
+    for i, query in enumerate(queries, start=1):
+        print(f"Executing Query {i}...")
+        connection.load_csv_data(query)
+
+    connection.close()
+
+if __name__ == '__main__':
+    main()

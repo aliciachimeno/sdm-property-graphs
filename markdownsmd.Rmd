@@ -445,26 +445,6 @@ names(Node_edition)
 ```
 
 
-Edge_edition_conference
-```{r}
-
-Edge_edition_conference<- data.frame(
-  ref_edition=dblp_proceedings$key.string,
-  conference=dblp_proceedings$booktitle.string #acronym conference
-)
-
-write.csv(Edge_edition_conference, "clean_datasets/Edge_edition_conference.csv", row.names = FALSE) 
-```
-
-Node_conference
-```{r}
-Node_conference<- data.frame(
-  unique(dblp_proceedings$booktitle.string)
-)
-Node_conference
-write.csv(Node_conference, "clean_datasets/Node_conference.csv", row.names = FALSE) 
-```
-
 
 Edge_papers_edition
 ```{r}
@@ -472,8 +452,50 @@ Edge_papers_edition<- data.frame(
   id_paper=dblp_inproceedings$inproceedings.ID,
   ref_edition=dblp_inproceedings$crossref.string..
 )
+
 write.csv(Edge_papers_edition, "clean_datasets/Edge_papers_edition.csv", row.names = FALSE) 
 ```
+
+```{r}
+Node_edition_ref<- data.frame(
+  ref_edition=unique(Edge_papers_edition$ref_edition)
+)
+
+Node_edition
+
+Node_edition_1<-left_join(Node_edition_ref,Node_edition)
+
+write.csv(Node_edition_1, "Node_edition.csv", row.names = FALSE) ### NODE EDITION
+
+
+```
+
+Edge_edition_conference
+```{r}
+Edge_edition_conference<- data.frame(
+  ref_edition=dblp_proceedings$key.string,
+  conference=dblp_proceedings$booktitle.string #acronym conference
+)
+```
+
+Join
+```{r}
+Edge_edition_conference_join<-left_join(Node_edition_1,Edge_edition_conference)
+Edge_edition_conference_1<-Edge_edition_conference_join[,c(1,6)] ###  EDITION 
+write.csv(Edge_edition_conference_1, "clean_datasets/Edge_edition_conference.csv", row.names = FALSE) 
+
+```
+
+
+Node_conference
+```{r}
+Node_conference<- data.frame(
+  conference=unique(Edge_edition_conference_1$conference)
+)
+Node_conference
+write.csv(Node_conference, "clean_datasets/Node_conference.csv", row.names = FALSE) 
+```
+
 
 
 # Section 5: topics

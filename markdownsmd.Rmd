@@ -140,7 +140,7 @@ Node_volume <- data.frame(
   volume =unique(Edge_paper_volumes$id_volume)
 )
 write.csv(Node_volume, "Node_volume.csv", row.names = FALSE) 
-names(Node_volumes)
+names(Node_volume)
 ```
 
 
@@ -161,14 +161,6 @@ Node_journals <- unique(Edge_paper_journal[,2])
 write.csv(Node_journals, "Node_journals.csv", row.names = FALSE) 
 
 ```
-
-Node_volumes:
-```{r}
-Node_volumes<-unique(dblp_article$volume.string)
-write.csv(Node_volumes, "Node_volumes.csv", row.names = FALSE) 
-
-```
-
 
 # SECTION 2: papers <-> conferences INPROCEEDINGS
 
@@ -429,14 +421,6 @@ names(dblp_proceedings)
 unique(dblp_proceedings$booktitle.string)
 ```
 
-union edition and papers
-```{r}
-#left_join_df <- left_join(Node_paper, conference_df, by = c("crossref.string.."="ref"))
-names(Edge_papers_edition)
-
-unique(Edge_papers_edition$ref_conf)
-```
-
 
 Node_edition
 ```{r}
@@ -513,21 +497,23 @@ dblp_topics<-read.csv("data_topics.csv",row.names =NULL, encoding = "latin1",hea
 Edge_papers_keywords
 ```{r}
 names(dblp_topics)
-Edge_papers_keywords<-dblp_topics[,c(1,3:5)]
+Edge_papers_keywords<-dblp_topics[,c(1,5)]
 ```
 
 Node_keywords
 ```{r}
-Node_keywords <- unique(Edge_papers_keywords[,2])
+Node_keywords <- unique(Edge_papers_keywords[,4])
 Node_keywords
 
 nsoe <- pivot_longer(Edge_papers_keywords, cols = -id_paper, values_to = "keywords")
 ```
 
-Edge_keywords (altre format)
+Edge_keywords_paper (altre format)
 ```{r}
-Edge_keywords<-nsoe[,c(1,3)]
-Edge_keywords
+Edge_papers_keywords<-nsoe[,c(1,3)]
+Edge_papers_keywords
+write.csv(Edge_papers_keywords, "Edge_papers_keywords.csv", row.names = FALSE)
+
 ```
 
 
@@ -621,8 +607,11 @@ Nose si s'ha de fer aquest format:
 
 long_df <- pivot_longer(Edge_cites_cols, cols = -id_paper, names_to = "cites_number", values_to = "cites_value")
 long_df <- long_df[complete.cases(long_df$cites_value), ]
-Edge_cites<-long_df[,c(1,3)]
-Edge_cites
+Edge_paper_paper<-long_df[,c(1,3)]
+Edge_paper_paper
+
+write.csv(Edge_paper_paper, "Edge_paper_paper.csv", row.names = FALSE)
+
 ```
 
 

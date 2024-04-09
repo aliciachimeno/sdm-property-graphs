@@ -42,6 +42,16 @@ def main():
         WITH j, citationYear, sum(numOfPublications) AS totalPublications, numOfCitations
         RETURN j.name AS Journal, citationYear AS Year, numOfCitations / totalPublications AS ImpactFactor
         ORDER BY j.name, citationYear
+        """,
+
+        """
+        MATCH (a:Author)-[:writes]->(p1:Papers)<-[:cites]-(p2:Papers)
+        WITH a, p1, count(*) AS paperCitations ORDER BY paperCitations DESC
+        WITH a, collect(paperCitations) AS citationCounts
+        WITH a, size(citationCounts) AS papersPerAuthor, citationCounts
+        WITH a, papersPerAuthor, [x IN citationCounts WHERE x >= papersPerAuthor | x] AS h
+        RETURN a.name, papersPerAuthor, coalesce(size(h), 0) AS hIndex
+        ORDER BY hIndex DESC
         """
     ]
 

@@ -27,7 +27,7 @@ def main():
 
         f"""
         LOAD CSV WITH HEADERS FROM '{base_url}/Node_paper.csv' AS row
-        MERGE (a:Papers {{name: row.paper_title, id: row.id_paper, doi: row.doi, abstract: row.abstract, pages: toInteger(row.year)}})
+        MERGE (a:Papers {{name: row.paper_title, id: row.id_paper, doi: row.doi, abstract: row.abstract, pages: row.pages}})
         """,
 
         f"""
@@ -91,7 +91,7 @@ def main():
         """,
 
         f"""
-        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_papers_keywords.csv' AS row
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_paper_keywords.csv' AS row
         MATCH (a:Papers {{id: row.id_paper}})
         MATCH (b:Keywords {{name: row.keywords}})
         MERGE (a)-[r:relates_to]->(b);

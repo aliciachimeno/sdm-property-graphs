@@ -29,7 +29,7 @@ class Neo4jConnection:
         with self.__driver.session() as session:
             results = session.execute_read(self._execute_queries, queries)
             for result in results:
-                print("The query \n`{query}`\n Returned {records_count} records in {time} ms.\n".format(
+                print("The query \n{query}\n Returned {records_count} records in {time} ms.\n".format(
                     query=result[1].query, records_count=len(result[0]),
                     time=result[1].result_available_after,
                 ))

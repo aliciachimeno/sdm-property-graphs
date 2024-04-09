@@ -14,13 +14,36 @@ def main():
     # Queries to execute, formatted for readability
     queries = [
         """
-        MATCH (c:Conference)--()--(p2:Papers)<--(p:Papers)
-        WITH c, p2, count(p) as numCitations
-        order by numCitations desc
-        with c.name as Conference, collect({Paper:p2.name, numOfCitations:numCitations}) as citations
-        return Conference,citations[0..3] as TOP3
-        order by Conference
+        MATCH (c:Conference)--()--(p2:Papers)<--(p1:Papers)
+        WITH c, p2, count(p1) AS numCitations
+        ORDER BY numCitations DESC
+        WITH c.name AS Conference, COLLECT({Paper:p2.name, NumOfCitations:numCitations}) AS citations
+        RETURN Conference, citations[0..3] AS TOP3
+        ORDER BY Conference
         """,
+
+        """
+        MATCH (c:Conference)--(e:Edition)--(p:Papers)<-[:writes]-(a:Author)
+        WITH a, c, count(distinct e) AS numOfEditions
+        WHERE numOfEditions >= 4
+        RETURN a.name, c.name, numOfEditions
+        ORDER BY numOfEditions DESC
+        """,
+
+        """
+        MATCH (j:Journals)--(v:Volume)--(p:Papers)
+        WITH j, toInteger(v.year) AS publicationYear, count(p) AS numOfPublications
+
+        MATCH (j:Journals)--(cited_v:Volume)--(cited_p:Papers)<-[c:cites]-(citing_p:Papers)--(citing_v:Volume)
+        WHERE toInteger(cited_v.year) = toInteger(citing_v.year) - 1 OR toInteger(cited_v.year) = toInteger(citing_v.year) - 2
+        WITH j, toInteger(citing_v.year) AS citationYear, count(c) AS numOfCitations, publicationYear, numOfPublications
+        WHERE  publicationYear = citationYear - 1 OR publicationYear = citationYear - 2
+
+        WITH j, citationYear, sum(numOfPublications) AS totalPublications, numOfCitations
+        RETURN j.name AS Journal, citationYear AS Year, numOfCitations / totalPublications AS ImpactFactor
+        ORDER BY j.name, citationYear
+        """
+        
     ]
 
     connection.execute_queries_and_print_results(queries)

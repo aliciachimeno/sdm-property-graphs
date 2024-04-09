@@ -27,17 +27,17 @@ def main():
 
         f"""
         LOAD CSV WITH HEADERS FROM '{base_url}/Node_paper.csv' AS row
-        MERGE (a:Papers {{name: row.paper_title, id: row.id_paper, doi: row.doi, abstract: row.abstract, pages: row.pages}})
+        MERGE (a:Papers {{name: row.paper_title, id: row.id_paper, doi: row.doi, abstract: row.abstract, pages: toInteger(row.year)}})
         """,
 
         f"""
         LOAD CSV WITH HEADERS FROM '{base_url}/Node_volumes.csv' AS row
-        MERGE (a:Volume {{name: row.volume, year: row.year}})
+        MERGE (a:Volume {{name: row.volume, year: toInteger(row.year)}})
         """,
 
         f"""
         LOAD CSV WITH HEADERS FROM '{base_url}/Node_edition.csv' AS row
-        MERGE (a:Edition {{name: row.edition, ref_edition: row.ref_edition, num: row.edition_num, location: row.location, year: row.year}})
+        MERGE (a:Edition {{name: row.edition, ref_edition: row.ref_edition, num: row.edition_num, location: row.location, year: toInteger(row.year)}})
         """,
 
         f"""
@@ -100,8 +100,15 @@ def main():
         f"""
         LOAD CSV WITH HEADERS FROM '{base_url}/Edge_volumes_journal.csv' AS row
         MATCH (a:Volume {{name: row.id_volume}})
-        MATCH (b:Journals {{name: row.journal}})
+        MATCH (b:Journal {{name: row.journal}})
         MERGE (a)-[r:belongs_to]->(b);
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_paper_author_reviews.csv' AS row
+        MATCH (a:Author {{name: row.author}})
+        MATCH (b:Papers {{id: row.id_paper}})
+        MERGE (a)-[r:reviews]->(b);
         """
     ]
 

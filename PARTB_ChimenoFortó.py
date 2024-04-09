@@ -31,11 +31,11 @@ def main():
         """,
 
         """
-        MATCH (j:Journals)--(v:Volume)--(p:Papers)
-        WITH j, toInteger(v.year) AS publicationYear, count(p) AS numOfPublications
+        MATCH (j:Journal)--(v:Volume)--(p:Papers)
+        WITH j, v.year AS publicationYear, count(p) AS numOfPublications
 
-        MATCH (j:Journals)--(cited_v:Volume)--(cited_p:Papers)<-[c:cites]-(citing_p:Papers)--(citing_v:Volume)
-        WHERE toInteger(cited_v.year) = toInteger(citing_v.year) - 1 OR toInteger(cited_v.year) = toInteger(citing_v.year) - 2
+        MATCH (j:Journal)--(cited_v:Volume)--(cited_p:Papers)<-[c:cites]-(citing_p:Papers)--(citing_v:Volume)
+        WHERE cited_v.year = citing_v.year - 1 OR cited_v.year = citing_v.year - 2
         WITH j, toInteger(citing_v.year) AS citationYear, count(c) AS numOfCitations, publicationYear, numOfPublications
         WHERE  publicationYear = citationYear - 1 OR publicationYear = citationYear - 2
 
@@ -43,7 +43,6 @@ def main():
         RETURN j.name AS Journal, citationYear AS Year, numOfCitations / totalPublications AS ImpactFactor
         ORDER BY j.name, citationYear
         """
-        
     ]
 
     connection.execute_queries_and_print_results(queries)

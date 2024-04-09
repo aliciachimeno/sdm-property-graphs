@@ -12,24 +12,27 @@ def main():
     connection = Neo4jConnection(uri, username, password)
 
     queries = [
-        # f"""
-        # LOAD CSV WITH HEADERS FROM '{base_url}/Node_affiliation.csv' AS row
-        # MERGE (a:Affiliation {{name: row.name, type: row.type}})
-        # """,
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_affiliation.csv' AS row
+        MERGE (a:Affiliation {{name: row.Affiliation, type: row.Type}})
+        """,
 
-        # f"""
-        # LOAD CSV WITH HEADERS FROM '{base_url}/Edge_author_affiliation.csv' AS row
-        # MATCH (a:Author {{name: row.author}})
-        # MATCH (b:Affiliation {{name: row.name}})
-        # MERGE (a)-[r:belongs_to]->(b);
-        # """,
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_affiliation_author.csv' AS row
+        MATCH (a:Author {{name: row.author}})
+        MATCH (b:Affiliation {{name: row.Affiliation}})
+        MERGE (a)-[r:belongs_to]->(b);
+        """,
 
-        # # Add properties to reviews
-        # f"""
-        # MATCH (p:Paper)-[r:reviews]-(a:Author)
-        # SET r.approves=TRUE
-        # RETURN r
-        # """,
+        # Add properties to reviews
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_paper_author_reviews.csv' AS row
+        WITH row
+        MATCH (p:Papers {{id: row.id_paper}})
+        MATCH (a:Author {{name: row.author}})
+        MERGE (a)-[r:reviews]->(p)
+        SET r.content = row.content, r.approves = row.approves
+        """
     ]  
 
     # Execute each query, respecting the readable formatting

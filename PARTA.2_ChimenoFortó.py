@@ -31,13 +31,6 @@ def main():
         """,
 
         f"""
-        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_papers_author.csv' AS row
-        MATCH (a:Author {{name: row.author}})
-        MATCH (b:Papers {{id: row.id_paper}})
-        MERGE (a)-[r:writes {{main_author: row.main_author}}]->(b);
-        """,
-
-        f"""
         LOAD CSV WITH HEADERS FROM '{base_url}/Node_volumes.csv' AS row
         MERGE (a:Volume {{name: row.volume, year: row.year}})
         """,
@@ -50,6 +43,18 @@ def main():
         f"""
         LOAD CSV WITH HEADERS FROM '{base_url}/Node_conference.csv' AS row
         MERGE (a:Conference {{name: row.conference}})
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Node_journals.csv' AS row
+        MERGE (a:Journal {{name: row.x}})
+        """,
+
+        f"""
+        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_papers_author.csv' AS row
+        MATCH (a:Author {{name: row.author}})
+        MATCH (b:Papers {{id: row.id_paper}})
+        MERGE (a)-[r:writes {{main_author: row.main_author}}]->(b);
         """,
 
         f"""
@@ -90,11 +95,6 @@ def main():
         MATCH (a:Papers {{id: row.id_paper}})
         MATCH (b:Keywords {{name: row.keywords}})
         MERGE (a)-[r:relates_to]->(b);
-        """,
-
-        f"""
-        LOAD CSV WITH HEADERS FROM '{base_url}/Node_journals.csv' AS row
-        MERGE (a:Journals {{name: row.x}})
         """,
 
         f"""

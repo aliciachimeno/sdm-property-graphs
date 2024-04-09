@@ -259,6 +259,28 @@ write.csv(Node_author, "clean_datasets/Node_author.csv", row.names = FALSE) # df
 write.csv(Edge_papers_author, "clean_datasets/Edge_papers_author.csv", row.names = FALSE) # df authors papers (relation)
 ```
 
+Node_affiliation
+```{r}
+dblp_affiliation<-read.csv("affiliations.csv",sep=",",row.names =NULL, fileEncoding = "UTF-8",nrows=1000) # load
+
+dt<-unique(dblp_affiliation[,c(2,3)])
+names(dt)<-c("Type","Affiliation")
+set.seed(125)
+random_indices <- sample(nrow(dt), 100)
+Node_affiliation<-dt[random_indices,]
+write.csv(Node_affiliation, "Node_affiliation.csv", row.names = FALSE)
+
+```
+
+Edge_affiliation_author
+```{r}
+
+random_assignments <- sample(Node_affiliation[,2], nrow(Node_author), replace = TRUE)
+Edge_affiliation_author<- data.frame(Author = Node_author, Affiliation = random_assignments)
+write.csv(Edge_affiliation_author, "Edge_affiliation_author.csv", row.names = FALSE)
+
+```
+
 # Section 4 : papers <-> conferences PROCEEDINGS
 Dades de les CONFERENCES
 
@@ -674,7 +696,18 @@ left_join_df$author1 <- ifelse(left_join_df$author == left_join_df$author1, NA, 
 left_join_df$author2 <- ifelse(left_join_df$author == left_join_df$author2 , NA, left_join_df$author2)
 left_join_df$author3 <- ifelse(left_join_df$author == left_join_df$author3, NA, left_join_df$author3)
 
-left_join_df
+piv<-unique(left_join_df[,c(1,4,5,6)])
+
+
+# Pivot the data longer
+df_long <- pivot_longer(piv, cols = starts_with("author"), names_to = "author_number", values_to = "author")
+Edge_paper_author_reviews<-df_long[,c(1,3)]
+
+
+Edge_paper_author_reviews$content <- sapply(Edge_paper_author_reviews$id_paper, function(x) generate_abstract())
+Edge_paper_author_reviews$approves<- sample(c(TRUE,FALSE), nrow(Edge_paper_author_reviews), replace = TRUE)
+
+write.csv(Edge_paper_author_reviews, "Edge_paper_author_reviews.csv", row.names = FALSE)
 
 
 ```

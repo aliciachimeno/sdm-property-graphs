@@ -109,19 +109,19 @@ def main():
         MATCH (a:Author {{name: row.author}})
         MATCH (b:Papers {{id: row.id_paper}})
         MERGE (a)-[r:reviews]->(b);
-        """,
-
-        f"""
-        LOAD CSV WITH HEADERS FROM '{base_url}/Node_community.csv' AS row
-        MERGE (a:Community {{name: row.community}})
-        """,
-
-         f"""
-        LOAD CSV WITH HEADERS FROM '{base_url}/Edge_community_keyword.csv' AS row
-        MATCH (a:Community {{name: row.community}})
-        MATCH (b:Keywords {{name: row.keywords}})
-        MERGE (a)-[r:associated_with]->(b);
         """
+
+        #f"""
+        #LOAD CSV WITH HEADERS FROM '{base_url}/Node_community.csv' AS row
+        #MERGE (a:Community {{name: row.community}})
+        #""",
+
+        # f"""
+        #LOAD CSV WITH HEADERS FROM '{base_url}/Edge_community_keyword.csv' AS row
+        #MATCH (a:Community {{name: row.community}})
+        #MATCH (b:Keywords {{name: row.keywords}})
+        #MERGE (a)-[r:associated_with]->(b);
+        #"""
 
 
     ]

@@ -13,10 +13,27 @@ def main():
      
     queries = [
         """
-        CALL gds.pageRank.stream('pageRankGraph', {maxIterations: 50,dampingFactor: 0.85}) YIELD nodeId, score
+        CALL gds.graph.project('pageRankGraph', 'Papers', 'cites')
+        """,
+
+        """
+        CALL gds.pageRank.stream('pageRankGraph', {maxIterations: 50,dampingFactor: 0.75}) YIELD nodeId, score
         RETURN gds.util.asNode(nodeId).name AS title, score 
         ORDER BY score DESC, title DESC
         limit 10;
+        """,
+
+        """
+        CALL gds.graph.project('nodeSimilarityGraph', 
+            ['Author', 'Papers'], 
+            'writes')
+        """,
+
+        """
+        CALL gds.nodeSimilarity.stream('nodeSimilarityGraph', {topK: 5, similarityCutoff: 0.3})
+        YIELD node1, node2, similarity
+        RETURN gds.util.asNode(node1).name AS Author1, gds.util.asNode(node2).name AS Author2, similarity
+        ORDER BY Author1, similarity DESC
         """
     ]
 

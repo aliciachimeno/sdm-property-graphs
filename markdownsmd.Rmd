@@ -719,6 +719,13 @@ write.csv(Edge_paper_author_reviews, "Edge_paper_author_reviews.csv", row.names 
 
 
 ```{r}
+Node_keywords
+Node_community <- data.frame(community = c("Database","Maths","Art","Artificial Inteligence","Programming","Sports","Music"))
+write.csv(Node_community, "Node_community.csv", row.names = FALSE)
+
+Edge_community_keyword <- data.frame(community = c("Database"),keywords=c("data management","indexing","data modeling","big data", "data processing", "data storage", "data querying") )
+write.csv(Edge_community_keyword, "Edge_community_keyword.csv", row.names = FALSE)
+
 
 ```
 

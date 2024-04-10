@@ -23,39 +23,47 @@ def main():
         MATCH (a:Community {{name: row.community}})
         MATCH (b:Keywords {{name: row.keywords}})
         MERGE (a)-[r:associated_with]->(b);
-        """
-    ]
-    queries = [
+        """,
         #STAGE 2
         """
         MATCH (j:Journal)--()--(p:Papers) 
         WITH j, count(DISTINCT p) AS total_journal_papers
 
         MATCH (j)--()--(p1:Papers)--()--(c:Community {name:"Database"})
-        WITH j, total_journal_papers, count(DISTINCT p1) AS db_journal_papers
-        WITH j, toFloat(db_journal_papers) / toFloat(total_journal_papers) AS percentage 
+        WITH c,j, total_journal_papers, count(DISTINCT p1) AS db_journal_papers
+        WITH c,j, toFloat(db_journal_papers) / toFloat(total_journal_papers) AS percentage 
         WHERE percentage >= 0.9
-        CREATE (j)-[:belongs_to]->(:Community {name: "Database"})
-        RETURN j.name AS name, 'Journal' AS type, percentage
+        CREATE (j)-[:belongs_to]->(c)
         UNION
         MATCH (co:Conference)--()--(p:Papers) 
         WITH co, count(DISTINCT p) AS total_conference_papers
 
         MATCH (co)--()--(p2:Papers)--()--(c:Community {name:"Database"})
-        WITH co, total_conference_papers, count(DISTINCT p2) AS db_conference_papers
-        WITH co, toFloat(db_conference_papers) / toFloat(total_conference_papers) AS percentage 
+        WITH c,co, total_conference_papers, count(DISTINCT p2) AS db_conference_papers
+        WITH c,co, toFloat(db_conference_papers) / toFloat(total_conference_papers) AS percentage 
         WHERE percentage >= 0.9
-        CREATE (co)-[:belongs_to]->(:Community {name: "Database"})
-        RETURN co.name AS name, 'Conference' AS type, percentage;
+        CREATE (co)-[:belongs_to]->(c)
         """,
         #STAGE 3
-
+        """
+        MATCH (r:Community {name: "Database"})<-[:belongs_to]-(:Conference|Journal)<-[:belongs_to|belongs_to]-(:Edition|Volume)<-[:published_in|contained_in]-(cited_papers:Papers)<-[citation:cites]-(citing_p:Papers)-[:published_in|contained_in]->(:Edition|Volume)-[:belongs_to|belongs_to]->(:Conference|Journal)-[:belongs_to]->(r)
+        WITH r, cited_papers, COUNT(citation) as numcitations
+        ORDER BY numcitations DESC
+        WITH r, COLLECT(cited_papers)[..100] AS top_cited_papers
+        UNWIND top_cited_papers AS paper
+        MERGE (paper)-[:is_top_paper_of]->(r)
+        """,
+        #STAGE 4
+        """
+        MATCH (a:Author)-[:writes]->(p:Papers)-[:is_top_paper_of]->(r:Community {name: 'Database'})
+        WITH r, a, COUNT(p) AS numpapers
+        WHERE numpapers >= 2
+        MERGE (a)-[:is_a_guru_of]->(r)
+        """
     ]
     for i, loading_queries in enumerate(loading_queries, start=1):
         print(f"Executing Query {i}...")
         connection.load_csv_data(loading_queries)
-
-    connection.execute_queries_and_print_results(queries)
 
     connection.close()
 
